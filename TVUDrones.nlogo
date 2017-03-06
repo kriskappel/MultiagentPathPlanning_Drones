@@ -377,11 +377,11 @@ to set-file-name
   if file = 0
   [
     let i 0
-    set file (word "../csvresults/TVUResults" i ".csv")
+    set file (word "TVUResults" i ".csv")
     while[ file-exists? file ]
     [
       set i i + 1
-      set file (word "../csvresults/TVUResults" i ".csv")
+      set file (word "TVUResults" i ".csv")
     ]
   ]
 end
