@@ -96,7 +96,7 @@ to setup-patches
 end
 
 to setup-ants
-  create-formigas number-of-ants[
+  create-formigas 1[
     set shape "airplane"
     set size 1
     set heading 0
@@ -130,8 +130,8 @@ to setup-ants
 
     matrix:set own-matrix 0 0 matrix:get own-matrix 0 0 + 1
     ask patch-here[
-       ;set u-value number-of-ants
-       set plabel u-value
+       ;set u-value u-value + 1
+       ;set plabel u-value
        set time-interval-visits lput 0 time-interval-visits
        set visita-anterior 0
     ]
@@ -238,54 +238,59 @@ end
 to go
    ;while [ ticks <= 10000 ]][
      spread-fire
+     create-ants
 
      ask formigas [
 
        delete-fire
 
-       let neighborMin [u-value] of min-one-of neighbors4 [u-value];seta o valor do menor da volta
-       ifelse patch-ahead 1 = nobody
-       [
+       ;let neighborMin [u-value] of min-one-of neighbors4 [u-value];seta o valor do menor da volta
+       let neighborMin min-of-4-matrix
+
+;       ifelse patch-ahead 1 = nobody
+;       [
          ;se o patch da frente não existe
-         add1-curve-list ;adiciona 1 na lista de curvas
-         set sucessor min-one-of neighbors4 [u-value]
-         facexy ([pxcor] of sucessor) ([pycor] of sucessor)
-         move-to sucessor; vai pra qualquer um do lado
-       ]
-       [
-         let proxValue [u-value] of patch-ahead 1
-
-         ifelse (proxValue = neighborMin) ;se o patch logo a frente for um dos possiveis minimos ele escolhe ir pra frente
-         [
-           set sucessor patch-ahead 1
-           set front-steps front-steps + 1
-           fd 1
-         ]
-         [;caso o patch da frente nao seja um dos possiveis minimos ele simplesmente escolhe qualquer um da volta
-
-           ;let old patch-here
+;         add1-curve-list ;adiciona 1 na lista de curvas
+;         set sucessor min-one-of neighbors4 [u-value]
+;         facexy ([pxcor] of sucessor) ([pycor] of sucessor)
+;         move-to sucessor; vai pra qualquer um do lado
+;       ]
+;       [
+;         let proxValue [u-value] of patch-ahead 1
+;
+;         ifelse (proxValue = neighborMin) ;se o patch logo a frente for um dos possiveis minimos ele escolhe ir pra frente
+;         [
+;           set sucessor patch-ahead 1
+;           set front-steps front-steps + 1
+;           fd 1
+;         ]
+;         [;caso o patch da frente nao seja um dos possiveis minimos ele simplesmente escolhe qualquer um da volta
+;
+;          ;let old patch-here
            ;let new min-one-of neighbors4 [u-value]
-           add1-curve-list ;adiciona 1 na lista de curvas
-           set sucessor min-one-of neighbors4 [u-value]
-           facexy ([pxcor] of sucessor) ([pycor] of sucessor)
-           move-to sucessor ; Movimentando a formiga para o vértice escolhido
+;           add1-curve-list ;adiciona 1 na lista de curvas
+;           set sucessor min-one-of neighbors4 [u-value]
+;           facexy ([pxcor] of sucessor) ([pycor] of sucessor)
+;           move-to sucessor ; Movimentando a formiga para o vértice escolhido
                             ;let xold xcor of old
                             ;let xnew xcor of new
                             ;ifelse (xold < xnew)
                             ;[
                             ;apontar heading para dada direção: olhar heading ou facexy
 
-         ]
-       ]
+;         ]
+;       ]
 
        ; Atualizando o valor do vértice
        ; e tempo de visita
-       matrix:set own-matrix ([pycor] of sucessor) ([pxcor] of sucessor) matrix:get own-matrix ([pycor] of sucessor) ([pxcor] of sucessor) + 1
+       face neighborMin
+       move-to neighborMin
+       matrix:set own-matrix ([pycor] of neighborMin) ([pxcor] of neighborMin) (matrix:get own-matrix ([pycor] of neighborMin) ([pxcor] of neighborMin)) + 1
        print matrix:pretty-print-text own-matrix
-       ask sucessor[
+       ask neighborMin[
 
-         ;;set u-value u-value + 1
-         ;;set plabel u-value
+         ;set u-value u-value + 1
+         ;set plabel u-value
 
          ifelse(length time-interval-visits = 0)
          [ set time-interval-visits lput ticks time-interval-visits ]
@@ -445,15 +450,51 @@ to add1-curve-list
    ;show front-steps
    export-to-csv
 end
+
+to-report min-of-4-matrix
+
+    let possible-patches []
+    ;primeiro testa todos os patches dos 4 vizinhos sao possiveis e poe os possiveis numa lista
+    if patch-at -1 0 != nobody
+    [set possible-patches lput patch-at -1 0 possible-patches]
+    if patch-at 1 0 != nobody
+    [set possible-patches lput patch-at 1 0 possible-patches]
+    if patch-at 0 1 != nobody
+    [set possible-patches lput patch-at 0 1 possible-patches]
+    if patch-at 0 -1 != nobody
+    [set possible-patches lput patch-at 0 -1 possible-patches]
+
+
+    ;acha o menor da lista
+    let menor item 0 possible-patches
+    let i 0
+    while [i < length possible-patches]
+    [
+      let current item i possible-patches
+
+      if matrix:get own-matrix ([pycor] of current) ([pxcor] of current) < matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
+      [ set menor current ]
+      set i i + 1
+    ]
+
+    if patch-ahead 1 != nobody
+    [; aqui se o menor for o logo a frente dai retorna ele, caso contrario retorna o menor
+      if matrix:get own-matrix ([pycor] of patch-ahead 1) ([pxcor] of patch-ahead 1) = matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
+      [report patch-ahead 1]
+    ]
+    report menor
+
+
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 70
 10
-488
-449
+486
+447
 -1
 -1
-8.0
+14.0
 1
 10
 1
@@ -464,9 +505,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-50
+28
 0
-50
+28
 0
 0
 1
@@ -514,9 +555,9 @@ SLIDER
 43
 number-of-ants
 number-of-ants
-0
-10
 1
+5
+2
 1
 1
 NIL
@@ -611,7 +652,7 @@ time-between-ants
 time-between-ants
 0
 2000
-1000
+229
 1
 1
 NIL
