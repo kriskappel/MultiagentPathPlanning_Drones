@@ -126,7 +126,7 @@ to setup-ants
       set own-matrix lput temporary-list own-matrix
     ]
     set own-matrix matrix:from-row-list own-matrix
-    print matrix:pretty-print-text own-matrix
+    ;print matrix:pretty-print-text own-matrix
 
     matrix:set own-matrix 0 0 matrix:get own-matrix 0 0 + 1
     ask patch-here[
@@ -286,7 +286,12 @@ to go
        face neighborMin
        move-to neighborMin
        matrix:set own-matrix ([pycor] of neighborMin) ([pxcor] of neighborMin) (matrix:get own-matrix ([pycor] of neighborMin) ([pxcor] of neighborMin)) + 1
-       print matrix:pretty-print-text own-matrix
+       ;ask patches in-radius 3
+       let firstMatrix own-matrix
+       ask other turtles-on patches in-radius 3
+       [sync-matrix own-matrix firstMatrix ]
+
+       ;print matrix:pretty-print-text own-matrix
        ask neighborMin[
 
          ;set u-value u-value + 1
@@ -454,14 +459,14 @@ end
 to-report min-of-4-matrix
 
     let possible-patches []
-    ;primeiro testa todos os patches dos 4 vizinhos sao possiveis e poe os possiveis numa lista
-    if patch-at -1 0 != nobody
+    ;primeiro testa todos os patches dos 4 vizinhos sao possiveis e se nao tem nenhuma turtle neles e poe os possiveis numa lista
+    if patch-at -1 0 != nobody and not any? turtles-on patch-at -1 0
     [set possible-patches lput patch-at -1 0 possible-patches]
-    if patch-at 1 0 != nobody
+    if patch-at 1 0 != nobody and not any? turtles-on patch-at 1 0
     [set possible-patches lput patch-at 1 0 possible-patches]
-    if patch-at 0 1 != nobody
+    if patch-at 0 1 != nobody and not any? turtles-on patch-at 0 1
     [set possible-patches lput patch-at 0 1 possible-patches]
-    if patch-at 0 -1 != nobody
+    if patch-at 0 -1 != nobody and not any? turtles-on patch-at 0 -1
     [set possible-patches lput patch-at 0 -1 possible-patches]
 
 
@@ -484,8 +489,15 @@ to-report min-of-4-matrix
     ]
     report menor
 
+end
+
+to sync-matrix [matrix1 matrix2]
+  print matrix:pretty-print-text matrix1
+  print matrix:pretty-print-text matrix2
 
 end
+
+
 @#$#@#$#@
 GRAPHICS-WINDOW
 70
@@ -652,7 +664,7 @@ time-between-ants
 time-between-ants
 0
 2000
-229
+51
 1
 1
 NIL
