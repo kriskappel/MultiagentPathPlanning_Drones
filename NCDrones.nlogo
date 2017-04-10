@@ -38,6 +38,7 @@ turtles-own[
   front-steps
   personal-curve-list
   own-matrix
+  already-sync
 ]
 
 patches-own[
@@ -100,6 +101,7 @@ to setup-ants
     set shape "airplane"
     set size 1
     set heading 0
+    set already-sync []
     set front-steps 0
     let i 0
     set personal-curve-list []
@@ -287,9 +289,20 @@ to go
        move-to neighborMin
        matrix:set own-matrix ([pycor] of neighborMin) ([pxcor] of neighborMin) (matrix:get own-matrix ([pycor] of neighborMin) ([pxcor] of neighborMin)) + 1
        ;ask patches in-radius 3
+
        let firstMatrix own-matrix
+
        ask other turtles-on patches in-radius 3
-       [sync-matrix own-matrix firstMatrix ]
+       [
+         if (not member? self [already-sync] of myself);se a turtle nao e membro do vetor de turtles ja sincronizada dai sincroniza
+         [
+           let newMatrix sync-matrix own-matrix firstMatrix
+           set own-matrix newMatrix
+         ]
+         ;set already-sync lput myse,lf already-sync
+       ]
+
+       set already-sync other turtles-on patches in-radius 3
 
        ;print matrix:pretty-print-text own-matrix
        ask neighborMin[
@@ -482,22 +495,42 @@ to-report min-of-4-matrix
       set i i + 1
     ]
 
-    if patch-ahead 1 != nobody
+    if patch-ahead 1 != nobody and not any? turtles-on patch-ahead 1
     [; aqui se o menor for o logo a frente dai retorna ele, caso contrario retorna o menor
       if matrix:get own-matrix ([pycor] of patch-ahead 1) ([pxcor] of patch-ahead 1) = matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
       [report patch-ahead 1]
     ]
+
     report menor
 
 end
 
-to sync-matrix [matrix1 matrix2]
+to-report sync-matrix [matrix1 matrix2]
+  let matrix3 (matrix:plus matrix1 matrix2)
+
+  let i 0
+  let j 0
+  while [i < max-pycor + 1]
+  [
+    set j 0
+    while [j < max-pxcor + 1]
+    [
+      let media (matrix:get matrix3 i j)
+      set media (round (media / 2))
+      matrix:set matrix3 i j media
+      set j j + 1
+    ]
+    set i i + 1
+  ]
+  print (word "matrix1")
   print matrix:pretty-print-text matrix1
+  print (word "matrix2")
   print matrix:pretty-print-text matrix2
-
+  print (word "matrix3")
+  print matrix:pretty-print-text matrix3
+  print " "
+  report matrix3
 end
-
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 70
@@ -664,7 +697,7 @@ time-between-ants
 time-between-ants
 0
 2000
-51
+102
 1
 1
 NIL
