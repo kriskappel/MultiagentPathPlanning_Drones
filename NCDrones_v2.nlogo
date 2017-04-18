@@ -128,7 +128,7 @@ to setup-ants
       set personal-curve-list lput 0 personal-curve-list
       set i i + 1
     ]
-    ;show (word "lista do agente" personal-curve-list)
+
     set i 0
     let j 0
     set own-matrix []
@@ -146,7 +146,6 @@ to setup-ants
       set own-matrix lput temporary-list own-matrix
     ]
     set own-matrix matrix:from-row-list own-matrix
-    ;print matrix:pretty-print-text own-matrix
 
     matrix:set own-matrix 0 0 matrix:get own-matrix 0 0 + 1
     ask patch-here[
@@ -160,92 +159,6 @@ to setup-ants
   ]
 end
 
-to start-fire
-  ; Trata-se de um novo foco de incendio (vetor)
-  let nova-lista n-values 0[0]
-
-  ; Cada novo foco contem o numero de ticks em que se originou o fogo
-  ; e os patches que compoem o incendio naquele local
-  ; Cada foco eh inserido dentro de uma
-  ; lista contendo todos os incendios (matriz)
-
-  ask patch random-pxcor random-pycor[
-     set pcolor 15
-
-     set nova-lista lput self nova-lista
-     set list-of-fires lput nova-lista list-of-fires
-     set list-of-ticks lput ticks list-of-ticks
-  ]
-end
-
-to spread-fire
-   if(ticks mod 100 = 0)[
-     start-fire
-
-     let k 0
-
-     ; Para cada foco de incendio contendo varios patches
-     ; expande o fogo para um vizinho
-     foreach list-of-fires [
-
-       ask [ one-of neighbors ] of one-of ? [
-         let novo-patch self
-
-         ask novo-patch [
-            set pcolor 15
-         ]
-
-         ; Atualizando o foco de incendio dentro da lista geral
-         set ? lput novo-patch ?
-         set list-of-fires replace-item k list-of-fires ?
-       ]
-       set k k + 1
-     ]
-   ]
-end
-
-; O agente detecta o fogo em um raio de 3 patches de distancia
-; Neste caso, ele apaga o fogo (pinta de azul) e
-; remove da lista geral a lista contendo o foco de incendio
-
-to delete-fire
-   if(count(patches in-radius 3 with [pcolor = 15]) > 0)[
-
-     let k 0
-     (foreach list-of-fires [
-       let p one-of patches in-radius 3 with[ pcolor = 15 ]
-
-       if(p != nobody)[
-         ask p [
-
-           if(member? self ?)[
-             (foreach ? [
-               ask ?1 [ set pcolor 85 ]
-             ])
-             set response-time lput (ticks - (item k list-of-ticks)) response-time
-
-             ;show word "Incendio " k
-             ;show word "ticks de inicio" list-of-ticks
-             ;show word "lista de fogos" list-of-fires
-             ;show word "tempo de resposta" response-time
-
-             set list-of-ticks remove-item k list-of-ticks
-             set list-of-fires remove ? list-of-fires
-
-             set number-of-fires number-of-fires + 1
-             ; set average-response-time mean response-time
-
-             ; if(length response-time > 1)
-             ; [ set sd-average-response-time standard-deviation response-time ]
-           ]
-           stop
-         ]
-       ]
-       set k k + 1
-     ])
-   ]
-end
-
 ;; Libera novos drones a cada intervalo de tempo especifico
 
 to create-ants
@@ -256,13 +169,9 @@ to create-ants
 end
 
 to go
-   ;while [ ticks <= 10000 ]][
-     spread-fire
      create-ants
 
      ask formigas [
-
-       delete-fire
 
        let neighborMin min-of-4-matrix
 
@@ -271,21 +180,20 @@ to go
          set front-steps front-steps + 1
        ]
        [
-         add1-curve-list
+         ;add1-curve-list
          ifelse ( neighborMin = patch-left-and-ahead 90 1 or neighborMin = patch-left-and-ahead -90 1)
          [set turn-side turn-side + 1]
-           ;print (word "90 graus" turn-side)]
+
          [if(neighborMin = patch-ahead -1)
            [set turn-back turn-back + 1]
-             ;print (word "180 graus" turn-back)]
+
          ]
        ]
 
        face neighborMin
        move-to neighborMin
        matrix:set own-matrix ([pycor] of neighborMin) ([pxcor] of neighborMin) (matrix:get own-matrix ([pycor] of neighborMin) ([pxcor] of neighborMin)) + 1
-       ;print (word "\n \n \n")
-       ;print matrix:pretty-print-text own-matrix
+
 
        let firstMatrix own-matrix
 
@@ -296,12 +204,12 @@ to go
            let newMatrix sync-matrix own-matrix firstMatrix
            set own-matrix newMatrix
          ]
-         ;set already-sync lput myse,lf already-sync
+
        ]
 
        set already-sync other turtles-on patches in-radius 3
 
-       ;print matrix:pretty-print-text own-matrix
+
        ask neighborMin[
 
          set u-value u-value + 1
@@ -340,16 +248,17 @@ end
 ; Também captura a media e o desvio padrao do tempo de resposta
 
 to qmi-calculator
+  let tempQMI 0
   ask patches with [length time-interval-visits != 0]
   [
-    set qmi qmi + last time-interval-visits ^ 2
+    set tempQMI tempQMI + last time-interval-visits ^ 2
   ]
-  set qmi qmi / count patches with [ length time-interval-visits != 0]
-  set qmi precision (sqrt qmi) 2
+  set tempQMI tempQMI / count patches with [ length time-interval-visits != 0]
+  set qmi precision (sqrt tempQMI) 2
 end
 
 to sdf-calculator
-  set sdf standard-deviation [u-value] of patches
+  set sdf precision (standard-deviation [u-value] of patches) 2
 end
 
 to frequency-interval-visits
@@ -369,22 +278,13 @@ to frequency-interval-visits
       ; Media de intervalo de tempo em que cada patch foi visitado
       ask patches[
          set m lput (mean time-interval-visits) m
-         ; show word "tempo de intervalo" time-interval-visits
-         ; show word "media" m
+
+
       ]
 
       ; Media e desvio padrao do intervalo entre cada visita de todos os patches
       set m-time-interval-visits mean m
       set sd-time-interval-visits standard-deviation m
-
-;      show word "Incendios apagados: " number-of-fires
-;      show word "Lista de tempos de resposta: " response-time
-;      show word "Tempo medio de resposta para apagar cada incendio: " average-response-time
-;      show word "Desvio padrao: " sd-average-response-time
-;      show word "Frequencia de visitas: " frequency-of-visits
-;      show word "Desvio padrao: " sd-frequency-of-visits
-;      show word "Intervalo de tempo entre as visitas: " m-time-interval-visits
-;      show word "Desvio padrao: " sd-time-interval-visits
 
       stop
    ]
@@ -419,7 +319,7 @@ to change-file
 end
 
 to set-file-name
-  show (word "file" file)
+
   if file = 0
   [
     let i 0
@@ -453,16 +353,14 @@ to export-to-csv
     ]
     set i i + 1
   ]
-  show curve-list
-  show personal-curve-list
+
   file-close
 
   ;set aux-index aux-index + 1
 end
 
 to setup-lists
-  ;set aux-index 0
-  ;file-open "/teste1.csv"
+
   let i 0
   set curve-list []
   set index-list []
@@ -470,17 +368,15 @@ to setup-lists
   [
     set curve-list lput 0 curve-list
     set index-list lput i index-list
-    ;set index-list lput "," index-list
+
     set i i + 1
 
-    ;file-print csv:to-row curve-list
   ]
-  show curve-list
-  ;file-close
+
 end
 
 to add1-curve-list
-   ;show (word "ué"lista)
+
    let item-list item front-steps curve-list ;copia o numero atual de vezes que andou reto aquela quantidade
    set item-list item-list + 1               ; e adiciona 1 a esse numero
    set curve-list replace-item front-steps curve-list item-list ;coloca no lugar no antigo
@@ -488,9 +384,9 @@ to add1-curve-list
    let personal-item-list item front-steps personal-curve-list
    set personal-item-list personal-item-list + 1
    set personal-curve-list replace-item front-steps personal-curve-list personal-item-list
-   ;show front-steps
+
    set front-steps 1 ;poe o numero de passos dados como 1 pois zera e depois ele vai se mover uma vez pra frente em seguida
-   ;show front-steps
+
    export-to-csv
 end
 
@@ -543,7 +439,7 @@ to-report min-of-4-matrix
     ]
 
     set menorList shuffle menorList
-    print menorList
+    ;print menorList
     report item 0 menorList
 
 end
@@ -565,22 +461,19 @@ to-report sync-matrix [matrix1 matrix2]
     ]
     set i i + 1
   ]
-  ;print (word "matrix1")
-  ;print matrix:pretty-print-text matrix1
-  ;print (word "matrix2")
-  ;print matrix:pretty-print-text matrix2
-  ;print (word "matrix3")
-  ;print matrix:pretty-print-text matrix3
-  ;print " "
+
   report matrix3
 end
 
 to percentage-calculator [checked]
-  let maxpatches max-pycor * max-pxcor
-  set checked checked * 100
-  set percentage precision (checked / maxpatches) 2
-  if (percentage = 100)
+  let maxpatches (max-pycor + 1) * (max-pxcor + 1)
+  if (checked = maxpatches)
   [set cobertura cobertura + 1]
+
+  set checked checked * 100
+
+  set percentage precision (checked / maxpatches) 2
+
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -653,33 +546,11 @@ number-of-ants
 number-of-ants
 1
 5
-2
+1
 1
 1
 NIL
 HORIZONTAL
-
-MONITOR
-495
-50
-630
-95
-Incêndios Apagados
-number-of-fires
-17
-1
-11
-
-MONITOR
-495
-100
-630
-145
-Tempo de Resposta
-mean response-time
-2
-1
-11
 
 SLIDER
 635
@@ -725,9 +596,9 @@ NIL
 
 MONITOR
 495
-150
+100
 630
-195
+145
 Cobertura (%)
 percentage
 17
@@ -735,10 +606,10 @@ percentage
 11
 
 MONITOR
-635
-100
-770
-145
+495
+150
+630
+195
 Curvas de 90°
 turn-side
 17
@@ -756,29 +627,11 @@ turn-back
 1
 11
 
-PLOT
-495
-285
-695
-435
-Coberturas
-porcentagem
-numero
-0.0
-100.0
-0.0
-10.0
-true
-false
-"" ""
-PENS
-"pen-0" 1.0 0 -7500403 true "" "let flag 0\nlet i 0\nlet checked 0\n\nwhile [flag = 0]\n[\n\nlet maxpatches max-pycor * max-pxcor\nifelse (item i percentages > 0)\n[\nset checked (item i percentages) * 100\n]\n[set flag 1]\nlet percentage precision (checked / maxpatches) 2\nplot percentage \nset i i + 1\n]"
-
 MONITOR
-705
-205
-762
-250
+570
+50
+627
+95
 QMI
 qmi
 17
@@ -786,10 +639,10 @@ qmi
 11
 
 MONITOR
-635
-205
-692
-250
+500
+50
+557
+95
 SDF
 sdf
 17
