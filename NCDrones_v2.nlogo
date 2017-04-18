@@ -37,7 +37,7 @@ globals[
 
    cobertura
    percentage
-   percentages
+   max-u-value
 
    sdf
    qmi
@@ -95,14 +95,13 @@ to setup-patches
   set turn-back 0
 
   set cobertura 0
-  set percentages []
+  set max-u-value 0
 
   let i 0
   let j 0
 
   repeat max-pxcor + 1 [
     set j 0
-    set percentages lput 0 percentages ; inicia o vetor de percentuais com 0
 
     repeat max-pycor + 1 [
       ifelse (remainder i 2 = 0)
@@ -122,12 +121,14 @@ to setup-ants
     set already-sync []
     set front-steps 0
     let i 0
-    set personal-curve-list []
-    while [i <= max-pycor] ;inicializa e preenche com 0 a lista de curvas de cada agente
-    [
-      set personal-curve-list lput 0 personal-curve-list
-      set i i + 1
-    ]
+    ;set personal-curve-list []
+    ;while [i <= max-pycor] ;inicializa e preenche com 0 a lista de curvas de cada agente
+    ;[
+     ; set personal-curve-list lput 0 personal-curve-list
+      ;set i i + 1
+    ;]
+    set personal-curve-list  n-values (max-pycor + 1) [0]
+
 
     set i 0
     let j 0
@@ -222,12 +223,24 @@ to go
        ]
      ]
 
-     let checked 0
+
+
+;primeira coisa, definir o tamanho da lista
+;segunda coisa, mudar o tamanho da lista sempre que uma nova cobertura for feita
+;terceira cosia, ask patch-here, checar se o valor é >= ao da cobertura e dar +1
+;se for mudar o tamanho da lista precisa salvar a antiga
+
+
+
+     if ([u-value] of max-one-of patches [u-value] > max-u-value)
+     [set max-u-value [u-value] of max-one-of patches [u-value]]
+
+     let checked n-values max-u-value[0]
      ask patches [
+
        if (u-value >= (cobertura + 1))
        [
          set checked checked + 1
-         ;set percentages replace-item u-value percentages (item u-value percentages)
        ]
      ]
 
@@ -648,6 +661,24 @@ sdf
 17
 1
 11
+
+PLOT
+495
+285
+770
+435
+Cobertura (%)
+Numero
+Porcentagem
+0.0
+25.0
+0.0
+100.0
+true
+false
+"set-plot-x-range 0 1\nset-plot-y-range 0 100" "set-plot-x-range 0 cobertura + 1\nset-plot-y-range 0 100 \nset-histogram-num-bars cobertura + 1"
+PENS
+"default" 1.0 0 -16777216 true "" "histogram percentage"
 
 @#$#@#$#@
 ## WHAT IS IT?
