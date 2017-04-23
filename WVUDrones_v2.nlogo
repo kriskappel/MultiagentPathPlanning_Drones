@@ -187,14 +187,55 @@ to go
 
          ]
        ]
+       let flag 0
+       ask patch-here [
+         if (u-value <= [u-value] of neighborMin)
+         [set u-value u-value + 1;atualizando o u-value só se for menor ou igual ao prox
+           set flag 1] ;flag para saber se foi atualizado o valor ou nao
+         set plabel u-value
+       ]
+
+       ;adiciona +1 na posição para a posição da turtle caso ela seja menor ou igual ao valor da proxima
+       if (matrix:get own-matrix ([pycor] of patch-here) ([pxcor] of patch-here) <= matrix:get own-matrix ([pycor] of neighborMin) ([pxcor] of neighborMin))
+       [matrix:set own-matrix ([pycor] of patch-here) ([pxcor] of patch-here) (matrix:get own-matrix ([pycor] of patch-here) ([pxcor] of patch-here)) + 1]
+
+       ;a parte abaixo é referente as coberturas
+       if(flag = 1)
+       [
+         ifelse (empty? checked);se for a primeira vez ele só seta o max-u-value, que é a variavel que guarda o maior u-value de todos pra dizer quantas posições tem o vetor
+         [
+           set max-u-value [u-value] of max-one-of patches [u-value];
+           set checked lput 1 checked ;coloca 1 pq ele ja vai iniciar e a primeira posição ja vai estar vista
+         ]
+         [
+           if ([u-value] of max-one-of patches [u-value] > max-u-value)
+           ;agora se nao for a primeira vez que o algoritmo roda ele testa se tem um novo maior u-value
+           ;caso tenha ele atualiza o max-u-value e copia o antigo vetor de numero de patches
+           [
+             set max-u-value [u-value] of max-one-of patches [u-value]
+             let newChecked [];vetor auxiliar pra fazer a copia
+             let i 0
+             while [i < length checked]
+             [
+               set newChecked lput item i checked newChecked
+               set i i + 1
+             ]
+             set newChecked lput 0 newChecked
+             set checked newChecked ; checked é o vetor que guarda o numero de patches ja cobertos, na posição 0 ele guarda o numero de patches com pelo menos u-value 1 e assim por diante
+           ]
+         ]
+
+
+         ask patch-here [
+
+           set checked replace-item (u-value - 1) checked (item (u-value - 1) checked + 1)
+           ;adiciona um no vetor de checked. Por exemplo, se a turtle anda pra um patch e atualiza a posição pra 5, na posição 4 ele soma + 1
+         ]
+       ]
 
        ;anda pro menor
        face neighborMin
        move-to neighborMin
-
-       ;adiciona +1 na posição para qual a turtle foi
-       matrix:set own-matrix ([pycor] of neighborMin) ([pxcor] of neighborMin) (matrix:get own-matrix ([pycor] of neighborMin) ([pxcor] of neighborMin)) + 1
-
 
        let firstMatrix own-matrix ;copia a matriz de memoria para uma matriz auxiliar no caso de achar
                                   ;uma outra turtle e precisar atualizar
@@ -218,44 +259,12 @@ to go
 
 
        ask neighborMin[
-
-         set u-value u-value + 1;atualiza o u-value
-         set plabel u-value
-
          ifelse(length time-interval-visits = 0) ;atualiza o vetor de ticks para contabilizar os intervalos de visitas pela turtle
          [ set time-interval-visits lput ticks time-interval-visits ]
          [ set time-interval-visits lput (ticks - visita-anterior) time-interval-visits ]
          set visita-anterior ticks
        ]
 
-       ;a parte a baixo é referente as coberturas
-       ifelse (empty? checked);se for a primeira vez ele só seta o max-u-value, que é a variavel que guarda o maior u-value de todos pra dizer quantas posições tem o vetor
-       [
-         set max-u-value [u-value] of max-one-of patches [u-value];
-         set checked lput 1 checked ;coloca 1 pq ele ja vai iniciar e a primeira posição ja vai estar vista
-       ]
-       [
-         if ([u-value] of max-one-of patches [u-value] > max-u-value)
-         ;agora se nao for a primeira vez que o algoritmo roda ele testa se tem um novo maior u-value
-         ;caso tenha ele atualiza o max-u-value e copia o antigo vetor de numero de patches
-         [
-           set max-u-value [u-value] of max-one-of patches [u-value]
-           let newChecked [];vetor auxiliar pra fazer a copia
-           let i 0
-           while [i < length checked]
-           [
-             set newChecked lput item i checked newChecked
-             set i i + 1
-           ]
-           set newChecked lput 0 newChecked
-           set checked newChecked ; checked é o vetor que guarda o numero de patches ja cobertos, na posição 0 ele guarda o numero de patches com pelo menos u-value 1 e assim por diante
-         ]
-       ]
-
-       ask patch-here [
-         set checked replace-item (u-value - 1) checked (item (u-value - 1) checked + 1)
-         ;adiciona um no vetor de checked. Por exemplo, se a turtle anda pra um patch e atualiza a posição pra 5, na posição 4 ele soma + 1
-       ]
      ]
      percentage-calculator ;atualiza o vetor de percentage, que é o vetor de porcentagem de coberturas com relação ao vetor checked
      sdf-calculator ;recalcula e atualiza o sdf
@@ -290,11 +299,11 @@ to set-file-name
   if file = 0
   [
     let i 0
-    set file (word "NCResults" i ".csv")
+    set file (word "WVUResults" i ".csv")
     while[ file-exists? file ]
     [
       set i i + 1
-      set file (word "NCResults" i ".csv")
+      set file (word "WVUResults" i ".csv")
     ]
   ]
 end

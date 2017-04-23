@@ -143,10 +143,10 @@ to setup-ants
     ]
     set own-matrix matrix:from-row-list own-matrix
 
-    matrix:set own-matrix 0 0 matrix:get own-matrix 0 0 + 1;colocando ++ na primeira posição
+    ;matrix:set own-matrix 0 0 matrix:get own-matrix 0 0 + 1;colocando ++ na primeira posição
 
     ask patch-here[
-       set u-value u-value + 1
+       ;set u-value u-value + 1
        set plabel u-value
        set time-interval-visits lput 0 time-interval-visits
        set visita-anterior 0
@@ -187,46 +187,15 @@ to go
 
          ]
        ]
-
-       ;anda pro menor
-       face neighborMin
-       move-to neighborMin
-
-       ;adiciona +1 na posição para qual a turtle foi
-       matrix:set own-matrix ([pycor] of neighborMin) ([pxcor] of neighborMin) (matrix:get own-matrix ([pycor] of neighborMin) ([pxcor] of neighborMin)) + 1
-
-
-       let firstMatrix own-matrix ;copia a matriz de memoria para uma matriz auxiliar no caso de achar
-                                  ;uma outra turtle e precisar atualizar
-
-       let newMatrix []
-       ask other turtles-on patches in-radius 3
-       [
-         if (not member? self [already-sync] of myself);se a turtle nao e membro do vetor de turtles ja sincronizada dai sincroniza
-         [
-           set newMatrix sync-matrix own-matrix firstMatrix;passa a matriz das duas turtles para sincronizar
-           set own-matrix newMatrix ;seta o valor na matrix do outro agente
-         ]
-
-       ]
-       if (not empty? newMatrix)
-       [set own-matrix newMatrix];seta o valor da matrix no agente inicial, caso tenha algum agente na volta em que o valor tambem foi alterado
-
-       set already-sync other turtles-on patches in-radius 3
-       ;adiciona os agentes ao redor na lista de ja sincronizados, quando nao há nenhum agente na volta essa lista fica zerada,
-       ;então assim que aparecer um agente novamente esse valor é atualizado
-
-
-       ask neighborMin[
-
-         set u-value u-value + 1;atualiza o u-value
+       ask patch-here [
+         set u-value max list (u-value) ([u-value] of neighborMin) ;atualizando o u-value só se for menor ou igual ao prox
+         set u-value u-value + 1
          set plabel u-value
-
-         ifelse(length time-interval-visits = 0) ;atualiza o vetor de ticks para contabilizar os intervalos de visitas pela turtle
-         [ set time-interval-visits lput ticks time-interval-visits ]
-         [ set time-interval-visits lput (ticks - visita-anterior) time-interval-visits ]
-         set visita-anterior ticks
        ]
+
+       ;adiciona +1 na posição para a posição da turtle caso ela seja menor ou igual ao valor da proxima
+       matrix:set own-matrix ([pycor] of patch-here) ([pxcor] of patch-here) max list (matrix:get own-matrix ([pycor] of patch-here) ([pxcor] of patch-here)) (matrix:get own-matrix ([pycor] of neighborMin) ([pxcor] of neighborMin))
+       matrix:set own-matrix ([pycor] of patch-here) ([pxcor] of patch-here) matrix:get own-matrix ([pycor] of patch-here) ([pxcor] of patch-here) + 1
 
        ;a parte a baixo é referente as coberturas
        ifelse (empty? checked);se for a primeira vez ele só seta o max-u-value, que é a variavel que guarda o maior u-value de todos pra dizer quantas posições tem o vetor
@@ -256,6 +225,40 @@ to go
          set checked replace-item (u-value - 1) checked (item (u-value - 1) checked + 1)
          ;adiciona um no vetor de checked. Por exemplo, se a turtle anda pra um patch e atualiza a posição pra 5, na posição 4 ele soma + 1
        ]
+
+       ;anda pro menor
+       face neighborMin
+       move-to neighborMin
+
+       let firstMatrix own-matrix ;copia a matriz de memoria para uma matriz auxiliar no caso de achar
+                                  ;uma outra turtle e precisar atualizar
+
+       let newMatrix []
+       ask other turtles-on patches in-radius 3
+       [
+         if (not member? self [already-sync] of myself);se a turtle nao e membro do vetor de turtles ja sincronizada dai sincroniza
+         [
+           set newMatrix sync-matrix own-matrix firstMatrix;passa a matriz das duas turtles para sincronizar
+           set own-matrix newMatrix ;seta o valor na matrix do outro agente
+         ]
+
+       ]
+       if (not empty? newMatrix)
+       [set own-matrix newMatrix];seta o valor da matrix no agente inicial, caso tenha algum agente na volta em que o valor tambem foi alterado
+
+       set already-sync other turtles-on patches in-radius 3
+       ;adiciona os agentes ao redor na lista de ja sincronizados, quando nao há nenhum agente na volta essa lista fica zerada,
+       ;então assim que aparecer um agente novamente esse valor é atualizado
+
+
+       ask neighborMin[
+         ifelse(length time-interval-visits = 0) ;atualiza o vetor de ticks para contabilizar os intervalos de visitas pela turtle
+         [ set time-interval-visits lput ticks time-interval-visits ]
+         [ set time-interval-visits lput (ticks - visita-anterior) time-interval-visits ]
+         set visita-anterior ticks
+       ]
+
+
      ]
      percentage-calculator ;atualiza o vetor de percentage, que é o vetor de porcentagem de coberturas com relação ao vetor checked
      sdf-calculator ;recalcula e atualiza o sdf
@@ -290,11 +293,11 @@ to set-file-name
   if file = 0
   [
     let i 0
-    set file (word "NCResults" i ".csv")
+    set file (word "TVUResults" i ".csv")
     while[ file-exists? file ]
     [
       set i i + 1
-      set file (word "NCResults" i ".csv")
+      set file (word "TVUResults" i ".csv")
     ]
   ]
 end
