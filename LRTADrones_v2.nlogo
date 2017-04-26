@@ -146,7 +146,7 @@ to setup-ants
     matrix:set own-matrix 0 0 matrix:get own-matrix 0 0 + 1;colocando ++ na primeira posição
 
     ask patch-here[
-       set u-value u-value + 1
+       ;set u-value u-value + 1
        set plabel u-value
        set time-interval-visits lput 0 time-interval-visits
        set visita-anterior 0
@@ -171,6 +171,15 @@ to go
 
        let neighborMin min-of-4-matrix ;retorna o patch com menor valor da vizinhança
 
+        ask patch-here [
+         set u-value [u-value] of neighborMin + 1;atualiza o u-value
+         set plabel u-value
+       ]
+
+       ;adiciona +1 na posição para qual a turtle foi
+       matrix:set own-matrix ([pycor] of patch-here) ([pxcor] of patch-here) (matrix:get own-matrix ([pycor] of neighborMin) ([pxcor] of neighborMin)) + 1
+
+
        ifelse ( neighborMin = patch-ahead 1)
        [;se o menor for o logo a frente ele só soma 1 na variavel de passos a frente pro histograma de curvas
          set front-steps front-steps + 1
@@ -187,13 +196,6 @@ to go
 
          ]
        ]
-       ask patch-here [
-         set u-value [u-value] of neighborMin + 1;atualiza o u-value
-         set plabel u-value
-       ]
-
-       ;adiciona +1 na posição para qual a turtle foi
-       matrix:set own-matrix ([pycor] of patch-here) ([pxcor] of patch-here) (matrix:get own-matrix ([pycor] of neighborMin) ([pxcor] of neighborMin)) + 1
 
        ask neighborMin[
          ifelse(length time-interval-visits = 0) ;atualiza o vetor de ticks para contabilizar os intervalos de visitas pela turtle
@@ -470,8 +472,8 @@ end
 GRAPHICS-WINDOW
 70
 10
-486
-447
+780
+741
 -1
 -1
 14.0
@@ -485,9 +487,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-28
+49
 0
-28
+49
 0
 0
 1
