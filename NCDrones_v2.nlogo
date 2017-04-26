@@ -174,7 +174,7 @@ to go
        ask patch-here[
          set u-value u-value + 1;atualiza o u-value
          set plabel u-value
-       ]s
+       ]
 
        let neighborMin min-of-4-matrix ;retorna o patch com menor valor da vizinhança
 
@@ -235,7 +235,7 @@ to go
        ifelse (empty? checked);se for a primeira vez ele só seta o max-u-value, que é a variavel que guarda o maior u-value de todos pra dizer quantas posições tem o vetor
        [
          set max-u-value [u-value] of max-one-of patches [u-value];
-         set checked lput 1 checked ;coloca 1 pq ele ja vai iniciar e a primeira posição ja vai estar vista
+         set checked lput 0 checked ;coloca 0 pra que nao se tenha uma lista vazia
        ]
        [
          if ([u-value] of max-one-of patches [u-value] > max-u-value)
@@ -255,7 +255,7 @@ to go
          ]
        ]
 
-       ask patch-here [
+       ask patch-ahead -1 [
          set checked replace-item (u-value - 1) checked (item (u-value - 1) checked + 1)
          ;adiciona um no vetor de checked. Por exemplo, se a turtle anda pra um patch e atualiza a posição pra 5, na posição 4 ele soma + 1
        ]
