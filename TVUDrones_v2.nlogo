@@ -234,16 +234,18 @@ to go
                                   ;uma outra turtle e precisar atualizar
 
        let newMatrix []
+       let flag 0;flag para saber se foi sincronizado ou nao
        ask other turtles-on patches in-radius 3
        [
          if (not member? self [already-sync] of myself);se a turtle nao e membro do vetor de turtles ja sincronizada dai sincroniza
          [
            set newMatrix sync-matrix own-matrix firstMatrix;passa a matriz das duas turtles para sincronizar
            set own-matrix newMatrix ;seta o valor na matrix do outro agente
+           set flag 1
          ]
 
        ]
-       if (not empty? newMatrix)
+       if (flag = 1)
        [set own-matrix newMatrix];seta o valor da matrix no agente inicial, caso tenha algum agente na volta em que o valor tambem foi alterado
 
        set already-sync other turtles-on patches in-radius 3
@@ -363,18 +365,21 @@ end
 to-report min-of-4-matrix
 
     let possible-patches []
+
     ;primeiro testa todos os patches dos 4 vizinhos sao possiveis e se nao tem nenhuma turtle neles e poe os possiveis numa lista (possible-patches)
-    if patch-at -1 0 != nobody and not any? turtles-on patch-at -1 0
-    [set possible-patches lput patch-at -1 0 possible-patches]
-    if patch-at 1 0 != nobody and not any? turtles-on patch-at 1 0
-    [set possible-patches lput patch-at 1 0 possible-patches]
-    if patch-at 0 1 != nobody and not any? turtles-on patch-at 0 1
-    [set possible-patches lput patch-at 0 1 possible-patches]
-    if patch-at 0 -1 != nobody and not any? turtles-on patch-at 0 -1
-    [set possible-patches lput patch-at 0 -1 possible-patches]
+    if patch-ahead 1 != nobody and not any? turtles-on patch-ahead 1
+    [set possible-patches lput patch-ahead 1 possible-patches]
+
+    if patch-left-and-ahead 90 1 != nobody and not any? turtles-on patch-left-and-ahead 90 1
+    [set possible-patches lput patch-left-and-ahead 90 1 possible-patches]
+
+    if patch-left-and-ahead -90 1 != nobody and not any? turtles-on patch-left-and-ahead -90 1
+    [set possible-patches lput patch-left-and-ahead -90 1 possible-patches]
+
+    if patch-ahead -1  != nobody and not any? turtles-on patch-ahead -1
+    [set possible-patches lput patch-ahead -1  possible-patches]
 
     let menor item 0 possible-patches
-    let menorList []
 
     ;acha o menor da lista
 
@@ -383,35 +388,47 @@ to-report min-of-4-matrix
     [
       let current item i possible-patches
 
-      ;algoritmo de achar menor da lista dividido em dois casos
-
-      ifelse matrix:get own-matrix ([pycor] of current) ([pxcor] of current) < matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
-      [ ; 1- se ele achar um novo menor na lista ele exclui os elementos da lista antigos e adiciona o novo
+      if matrix:get own-matrix ([pycor] of current) ([pxcor] of current) < matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
+      [
         set menor current
-        while [ not empty? menorList]
-        [
-          set menorList remove-item 0 menorList
-        ]
-        set menorList lput menor menorList
       ]
-      [ ;2- se ele achar outro patch com o mesmo valor do atual menor ele só adiciona na lista
-        if matrix:get own-matrix ([pycor] of current) ([pxcor] of current) = matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
-        [set menorList lput current menorList]
-      ]
-
       set i i + 1
     ]
+    ;no final do loop menor tem o valor do menor
 
-    if patch-ahead 1 != nobody and not any? turtles-on patch-ahead 1
-    [; aqui se o menor for o logo a frente dai retorna ele, caso contrario retorna o menor que esta na lista
+    if member? patch-ahead 1 possible-patches
+    [; aqui se o menor for o logo a frente dai retorna ele, caso contrario continua a execução
       if matrix:get own-matrix ([pycor] of patch-ahead 1) ([pxcor] of patch-ahead 1) = matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
       [report patch-ahead 1];retorna o menor se ele for o logo a frente
     ]
 
-    ;caso o patch logo a frente nao for um dos menores então ele caino caso abaixo
-    set menorList shuffle menorList ;embaralha a lista para retornar um patch aleatorio
+    let sidelist []
+    set sidelist lput patch-left-and-ahead -90 1 sidelist
+    set sidelist lput patch-left-and-ahead 90 1 sidelist
+    ;guardou os dois dos lados no sidelist pra passar um random neles caso os dois dos lados estejam disponiveis
 
-    report item 0 menorList ;retorna o primeiro patch da lista de menores
+    if (member? patch-left-and-ahead -90 1 possible-patches) and (member? patch-left-and-ahead 90 1 possible-patches)
+    [; se os dois  forem possiveis
+      if matrix:get own-matrix ([pycor] of patch-left-and-ahead 90 1) ([pxcor] of patch-left-and-ahead 90 1) = matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
+      [; e um deles for o menor e os dois forem iguais dai ele passa um random e retorna
+        if matrix:get own-matrix ([pycor] of patch-left-and-ahead -90 1) ([pxcor] of patch-left-and-ahead -90 1) = matrix:get own-matrix ([pycor] of patch-left-and-ahead 90 1) ([pxcor] of patch-left-and-ahead 90 1)
+        [report item 0 shuffle sidelist]
+      ]
+    ]
+    if (member? patch-left-and-ahead 90 1 possible-patches)
+    [; caso nao caia na condição anterior ele testa só o de um lado
+      if matrix:get own-matrix ([pycor] of patch-left-and-ahead 90 1) ([pxcor] of patch-left-and-ahead 90 1) = matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
+      [report patch-left-and-ahead 90 1]
+    ]
+    if (member? patch-left-and-ahead -90 1 possible-patches)
+    [; e depois testa do outro
+      if matrix:get own-matrix ([pycor] of patch-left-and-ahead -90 1) ([pxcor] of patch-left-and-ahead -90 1) = matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
+      [report patch-left-and-ahead -90 1]
+    ]
+
+    ;por final se nao caiu em nenhuma das condições anteriores só resta testar o atras
+    if member? patch-ahead -1 possible-patches
+    [report patch-ahead -1]
 
 end
 
