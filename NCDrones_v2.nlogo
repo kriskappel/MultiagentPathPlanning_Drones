@@ -143,10 +143,10 @@ to setup-ants
     ]
     set own-matrix matrix:from-row-list own-matrix
 
-    matrix:set own-matrix 0 0 matrix:get own-matrix 0 0 + 1;colocando ++ na primeira posição
+    ;matrix:set own-matrix 0 0 matrix:get own-matrix 0 0 + 1;colocando ++ na primeira posição
 
     ask patch-here[
-       set u-value u-value + 1
+       ;set u-value u-value + 1
        set plabel u-value
        set time-interval-visits lput 0 time-interval-visits
        set visita-anterior 0
@@ -168,6 +168,13 @@ to go
      create-ants
 
      ask formigas [
+       ;adiciona +1 na posição para qual a turtle foi
+       matrix:set own-matrix ([pycor] of patch-here) ([pxcor] of patch-here) (matrix:get own-matrix ([pycor] of patch-here) ([pxcor] of patch-here)) + 1
+
+       ask patch-here[
+         set u-value u-value + 1;atualiza o u-value
+         set plabel u-value
+       ]s
 
        let neighborMin min-of-4-matrix ;retorna o patch com menor valor da vizinhança
 
@@ -191,9 +198,6 @@ to go
        ;anda pro menor
        face neighborMin
        move-to neighborMin
-
-       ;adiciona +1 na posição para qual a turtle foi
-       matrix:set own-matrix ([pycor] of neighborMin) ([pxcor] of neighborMin) (matrix:get own-matrix ([pycor] of neighborMin) ([pxcor] of neighborMin)) + 1
 
 
        let firstMatrix own-matrix ;copia a matriz de memoria para uma matriz auxiliar no caso de achar
@@ -220,9 +224,6 @@ to go
 
 
        ask neighborMin[
-
-         set u-value u-value + 1;atualiza o u-value
-         set plabel u-value
 
          ifelse(length time-interval-visits = 0) ;atualiza o vetor de ticks para contabilizar os intervalos de visitas pela turtle
          [ set time-interval-visits lput ticks time-interval-visits ]
