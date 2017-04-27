@@ -146,7 +146,7 @@ to setup-ants
     matrix:set own-matrix 0 0 matrix:get own-matrix 0 0 + 1;colocando ++ na primeira posição
 
     ask patch-here[
-       set u-value u-value + 1
+       ;set u-value u-value + 1
        set plabel u-value
        set time-interval-visits lput 0 time-interval-visits
        set visita-anterior 0
@@ -168,6 +168,15 @@ to go
      create-ants
 
      ask formigas [
+       ;adiciona +1 na posição para qual a turtle foi
+       matrix:set own-matrix ([pycor] of patch-here) ([pxcor] of patch-here) (matrix:get own-matrix ([pycor] of patch-here) ([pxcor] of patch-here)) + 1
+       ask patch-here
+       [
+
+         set u-value u-value + 1;atualiza o u-value
+         set plabel u-value
+       ]
+
 
        let neighborMin min-of-4-matrix ;retorna o patch com menor valor da vizinhança
 
@@ -192,14 +201,7 @@ to go
        face neighborMin
        move-to neighborMin
 
-       ;adiciona +1 na posição para qual a turtle foi
-       matrix:set own-matrix ([pycor] of neighborMin) ([pxcor] of neighborMin) (matrix:get own-matrix ([pycor] of neighborMin) ([pxcor] of neighborMin)) + 1
-
-
        ask neighborMin[
-
-         set u-value u-value + 1;atualiza o u-value
-         set plabel u-value
 
          ifelse(length time-interval-visits = 0) ;atualiza o vetor de ticks para contabilizar os intervalos de visitas pela turtle
          [ set time-interval-visits lput ticks time-interval-visits ]
@@ -211,7 +213,7 @@ to go
        ifelse (empty? checked);se for a primeira vez ele só seta o max-u-value, que é a variavel que guarda o maior u-value de todos pra dizer quantas posições tem o vetor
        [
          set max-u-value [u-value] of max-one-of patches [u-value];
-         set checked lput 1 checked ;coloca 1 pq ele ja vai iniciar e a primeira posição ja vai estar vista
+         set checked lput 0 checked ;coloca 1 pq ele ja vai iniciar e a primeira posição ja vai estar vista
        ]
        [
          if ([u-value] of max-one-of patches [u-value] > max-u-value)
@@ -231,7 +233,7 @@ to go
          ]
        ]
 
-       ask patch-here [
+       ask patch-ahead -1 [
          set checked replace-item (u-value - 1) checked (item (u-value - 1) checked + 1)
          ;adiciona um no vetor de checked. Por exemplo, se a turtle anda pra um patch e atualiza a posição pra 5, na posição 4 ele soma + 1
        ]

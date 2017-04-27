@@ -128,7 +128,7 @@ to setup-ants
     let j 0
 
     ask patch-here[
-       set u-value u-value + 1
+       ;set u-value u-value + 1
        set plabel u-value
        set time-interval-visits lput 0 time-interval-visits
        set visita-anterior 0
@@ -153,6 +153,11 @@ to go
 
        let neighborMin min-one-of neighbors4 [u-value] ;retorna o patch com menor valor da vizinhança
 
+       ask patch-here[
+
+         set u-value u-value + 1;atualiza o u-value
+         set plabel u-value
+       ]
 
        ifelse ( neighborMin = patch-ahead 1)
        [;se o menor for o logo a frente ele só soma 1 na variavel de passos a frente pro histograma de curvas
@@ -177,9 +182,6 @@ to go
 
        ask neighborMin[
 
-         set u-value u-value + 1;atualiza o u-value
-         set plabel u-value
-
          ifelse(length time-interval-visits = 0) ;atualiza o vetor de ticks para contabilizar os intervalos de visitas pela turtle
          [ set time-interval-visits lput ticks time-interval-visits ]
          [ set time-interval-visits lput (ticks - visita-anterior) time-interval-visits ]
@@ -190,7 +192,7 @@ to go
        ifelse (empty? checked);se for a primeira vez ele só seta o max-u-value, que é a variavel que guarda o maior u-value de todos pra dizer quantas posições tem o vetor
        [
          set max-u-value [u-value] of max-one-of patches [u-value];
-         set checked lput 1 checked ;coloca 1 pq ele ja vai iniciar e a primeira posição ja vai estar vista
+         set checked lput 0 checked ;coloca 1 pq ele ja vai iniciar e a primeira posição ja vai estar vista
        ]
        [
          if ([u-value] of max-one-of patches [u-value] > max-u-value)
@@ -210,7 +212,7 @@ to go
          ]
        ]
 
-       ask patch-here [
+       ask patch-ahead -1 [
          set checked replace-item (u-value - 1) checked (item (u-value - 1) checked + 1)
          ;adiciona um no vetor de checked. Por exemplo, se a turtle anda pra um patch e atualiza a posição pra 5, na posição 4 ele soma + 1
        ]
@@ -401,7 +403,7 @@ number-of-ants
 number-of-ants
 1
 5
-1
+2
 1
 1
 NIL
@@ -414,9 +416,9 @@ SLIDER
 83
 time-between-ants
 time-between-ants
-0
+1
 2000
-102
+1
 1
 1
 NIL
