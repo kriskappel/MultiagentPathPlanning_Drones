@@ -169,9 +169,7 @@ to go
 
      ask formigas [
        ;adiciona +1 na posição para qual a turtle foi
-       print ticks
        matrix:set own-matrix ([pycor] of patch-here) ([pxcor] of patch-here) (matrix:get own-matrix ([pycor] of patch-here) ([pxcor] of patch-here)) + 1
-       print matrix:pretty-print-text own-matrix
 
        ask patch-here[
          set u-value u-value + 1;atualiza o u-value
@@ -433,11 +431,9 @@ to-report min-of-4-matrix
 end
 
 to-report sync-matrix [matrix1 matrix2] ;sincroniza as duas matrizes passadas
-  print " "
+  let matrix3 matrix1
   print matrix:pretty-print-text matrix1
-  print " "
   print matrix:pretty-print-text matrix2
-  let matrix3 (matrix:plus matrix1 matrix2) ;matrix3 é a soma das matrizes 1 e 2
 
   let i 0
   let j 0
@@ -446,14 +442,13 @@ to-report sync-matrix [matrix1 matrix2] ;sincroniza as duas matrizes passadas
     set j 0
     while [j < max-pxcor + 1]
     [
-      let media (matrix:get matrix3 i j)
-      set media (round (media / 2)) ;faz a media de cada valor da lista
-      matrix:set matrix3 i j media  ;e atribui na matriz q sera retornada
+      let value max (list (matrix:get matrix1 i j) (matrix:get matrix2 i j))
+      ;set media (round (media / 2)) ;faz a media de cada valor da lista
+      matrix:set matrix3 i j value  ;e atribui na matriz q sera retornada
       set j j + 1
     ]
     set i i + 1
   ]
-  print " "
   print matrix:pretty-print-text matrix3
   report matrix3
 end
@@ -557,9 +552,9 @@ SLIDER
 83
 time-between-ants
 time-between-ants
-0
+2
 2000
-102
+2
 1
 1
 NIL
