@@ -1,6 +1,5 @@
 extensions [
   csv
-  matrix
 ]
 
 breed [formigas]
@@ -48,7 +47,7 @@ turtles-own[
   sucessor
   front-steps
   personal-curve-list
-  own-matrix
+
   already-sync
 ]
 
@@ -127,23 +126,6 @@ to setup-ants
 
     let i 0
     let j 0
-    set own-matrix []
-
-    ;inicializando matriz de memoria de cada agente
-    repeat max-pxcor + 1
-    [
-      let temporary-list[]
-      repeat max-pycor + 1
-      [
-        set temporary-list lput 0 temporary-list
-
-      ]
-
-      set own-matrix lput temporary-list own-matrix
-    ]
-    set own-matrix matrix:from-row-list own-matrix
-
-    ;matrix:set own-matrix 0 0 matrix:get own-matrix 0 0 + 1;colocando ++ na primeira posição
 
     ask patch-here[
        ;set u-value u-value + 1
@@ -168,15 +150,14 @@ to go
      create-ants
 
      ask formigas [
-       ;adiciona +1 na posição para qual a turtle foi
-       matrix:set own-matrix ([pycor] of patch-here) ([pxcor] of patch-here) (matrix:get own-matrix ([pycor] of patch-here) ([pxcor] of patch-here)) + 1
+
+       let neighborMin min-one-of neighbors4 [u-value] ;retorna o patch com menor valor da vizinhança
 
        ask patch-here[
-         set u-value u-value + 1;atualiza o u-value
+
+         set u-value max list (u-value) ([u-value] of neighborMin) + 1 ;atualizando o u-value
          set plabel u-value
        ]
-
-       let neighborMin min-of-4-matrix ;retorna o patch com menor valor da vizinhança
 
        ifelse ( neighborMin = patch-ahead 1)
        [;se o menor for o logo a frente ele só soma 1 na variavel de passos a frente pro histograma de curvas
@@ -199,23 +180,6 @@ to go
        face neighborMin
        move-to neighborMin
 
-
-       let firstMatrix own-matrix ;copia a matriz de memoria para uma matriz auxiliar no caso de achar
-                                  ;uma outra turtle e precisar atualizar
-
-       let newMatrix []
-       let flag 0;flag para saber se foi sincronizado ou nao
-       ask other turtles-on patches in-radius 3
-       [
-
-           set newMatrix sync-matrix own-matrix firstMatrix;passa a matriz das duas turtles para sincronizar
-
-           set flag 1
-
-       ]
-       if (flag = 1)
-       [set own-matrix newMatrix];seta o valor da matrix no agente inicial, caso tenha algum agente na volta em que o valor tambem foi alterado
-
        ask neighborMin[
 
          ifelse(length time-interval-visits = 0) ;atualiza o vetor de ticks para contabilizar os intervalos de visitas pela turtle
@@ -228,7 +192,7 @@ to go
        ifelse (empty? checked);se for a primeira vez ele só seta o max-u-value, que é a variavel que guarda o maior u-value de todos pra dizer quantas posições tem o vetor
        [
          set max-u-value [u-value] of max-one-of patches [u-value];
-         set checked lput 0 checked ;coloca 0 pra que nao se tenha uma lista vazia
+         set checked lput 0 checked ;coloca 1 pq ele ja vai iniciar e a primeira posição ja vai estar vista
        ]
        [
          if ([u-value] of max-one-of patches [u-value] > max-u-value)
@@ -249,6 +213,7 @@ to go
        ]
 
        ask patch-ahead -1 [
+
          set checked replace-item (u-value - 1) checked (item (u-value - 1) checked + 1)
          ;adiciona um no vetor de checked. Por exemplo, se a turtle anda pra um patch e atualiza a posição pra 5, na posição 4 ele soma + 1
        ]
@@ -355,82 +320,6 @@ to add1-curve-list
    export-to-csv
 end
 
-to-report min-of-4-matrix
-
-    let possible-patches []
-
-    ;primeiro testa todos os patches dos 4 vizinhos sao possiveis e se nao tem nenhuma turtle neles e poe os possiveis numa lista (possible-patches)
-    if patch-ahead 1 != nobody and not any? turtles-on patch-ahead 1
-    [set possible-patches lput patch-ahead 1 possible-patches]
-
-    if patch-left-and-ahead 90 1 != nobody and not any? turtles-on patch-left-and-ahead 90 1
-    [set possible-patches lput patch-left-and-ahead 90 1 possible-patches]
-
-    if patch-left-and-ahead -90 1 != nobody and not any? turtles-on patch-left-and-ahead -90 1
-    [set possible-patches lput patch-left-and-ahead -90 1 possible-patches]
-
-    if patch-ahead -1  != nobody and not any? turtles-on patch-ahead -1
-    [set possible-patches lput patch-ahead -1  possible-patches]
-
-    let menor item 0 possible-patches
-
-    ;acha o menor da lista
-
-    let i 0
-    while [i < length possible-patches]
-    [
-      let current item i possible-patches
-
-      if matrix:get own-matrix ([pycor] of current) ([pxcor] of current) < matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
-      [
-        set menor current
-      ]
-      set i i + 1
-    ]
-    ;no final do loop menor tem o valor do menor
-
-    if member? patch-ahead 1 possible-patches
-    [; aqui se o menor for o logo a frente dai retorna ele, caso contrario continua a execução
-      if matrix:get own-matrix ([pycor] of patch-ahead 1) ([pxcor] of patch-ahead 1) = matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
-      [report patch-ahead 1];retorna o menor se ele for o logo a frente
-    ]
-
-    let sidelist []
-    set sidelist lput patch-left-and-ahead -90 1 sidelist
-    set sidelist lput patch-left-and-ahead 90 1 sidelist
-    ;guardou os dois dos lados no sidelist pra passar um random neles caso os dois dos lados estejam disponiveis
-
-    if (member? patch-left-and-ahead -90 1 possible-patches) and (member? patch-left-and-ahead 90 1 possible-patches)
-    [; se os dois  forem possiveis
-      if matrix:get own-matrix ([pycor] of patch-left-and-ahead 90 1) ([pxcor] of patch-left-and-ahead 90 1) = matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
-      [; e um deles for o menor e os dois forem iguais dai ele passa um random e retorna
-        if matrix:get own-matrix ([pycor] of patch-left-and-ahead -90 1) ([pxcor] of patch-left-and-ahead -90 1) = matrix:get own-matrix ([pycor] of patch-left-and-ahead 90 1) ([pxcor] of patch-left-and-ahead 90 1)
-        [report item 0 shuffle sidelist]
-      ]
-    ]
-    if (member? patch-left-and-ahead 90 1 possible-patches)
-    [; caso nao caia na condição anterior ele testa só o de um lado
-      if matrix:get own-matrix ([pycor] of patch-left-and-ahead 90 1) ([pxcor] of patch-left-and-ahead 90 1) = matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
-      [report patch-left-and-ahead 90 1]
-    ]
-    if (member? patch-left-and-ahead -90 1 possible-patches)
-    [; e depois testa do outro
-      if matrix:get own-matrix ([pycor] of patch-left-and-ahead -90 1) ([pxcor] of patch-left-and-ahead -90 1) = matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
-      [report patch-left-and-ahead -90 1]
-    ]
-
-    ;por final se nao caiu em nenhuma das condições anteriores só resta testar o atras
-    if member? patch-ahead -1 possible-patches
-    [report patch-ahead -1]
-
-end
-
-to-report sync-matrix [matrix1 matrix2] ;sincroniza as duas matrizes passadas
-  let matrix3 (matrix:plus matrix1 matrix2) ;matrix3 é a soma das matrizes 1 e 2
-
-  report matrix3
-end
-
 to percentage-calculator
   let i 0
   let porcentagem n-values (length checked)[0] ;inicia uma lista porcentagem que é uma auxiliar da percentage
@@ -450,8 +339,8 @@ end
 GRAPHICS-WINDOW
 70
 10
-486
-447
+780
+741
 -1
 -1
 14.0
@@ -465,9 +354,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-28
+49
 0
-28
+49
 0
 0
 1
@@ -517,7 +406,7 @@ number-of-ants
 number-of-ants
 1
 5
-4
+2
 1
 1
 NIL

@@ -42,6 +42,7 @@ globals[
 
    sdf
    qmi
+   ;tempQMI
 ]
 
 turtles-own[
@@ -49,7 +50,7 @@ turtles-own[
   front-steps
   personal-curve-list
   own-matrix
-  already-sync
+  ;already-sync
 ]
 
 patches-own[
@@ -100,8 +101,11 @@ to setup-patches
   set checked []
   set percentage [0]
 
+  ;set tempQMI 0
+
   let i 0
   let j 0
+
 
   repeat max-pxcor + 1 [
     set j 0
@@ -121,7 +125,7 @@ to setup-ants
     set shape "airplane"
     set size 1
     set heading 0
-    set already-sync []
+
     set front-steps 0
     set personal-curve-list  n-values (max-pycor + 1) [0]
 
@@ -169,6 +173,7 @@ to go
 
      ask formigas [
        ;adiciona +1 na posição para qual a turtle foi
+
        matrix:set own-matrix ([pycor] of patch-here) ([pxcor] of patch-here) (matrix:get own-matrix ([pycor] of patch-here) ([pxcor] of patch-here)) + 1
 
        ask patch-here[
@@ -207,21 +212,12 @@ to go
        let flag 0;flag para saber se foi sincronizado ou nao
        ask other turtles-on patches in-radius 3
        [
-         if (not member? self [already-sync] of myself);se a turtle nao e membro do vetor de turtles ja sincronizada dai sincroniza
-         [
            set newMatrix sync-matrix own-matrix firstMatrix;passa a matriz das duas turtles para sincronizar
-           set own-matrix newMatrix ;seta o valor na matrix do outro agente
-           set flag 1
-         ]
 
+           set flag 1
        ]
        if (flag = 1)
        [set own-matrix newMatrix];seta o valor da matrix no agente inicial, caso tenha algum agente na volta em que o valor tambem foi alterado
-
-       set already-sync other turtles-on patches in-radius 3
-       ;adiciona os agentes ao redor na lista de ja sincronizados, quando nao há nenhum agente na volta essa lista fica zerada,
-       ;então assim que aparecer um agente novamente esse valor é atualizado
-
 
        ask neighborMin[
 
@@ -268,14 +264,16 @@ to go
 end
 
 to qmi-calculator
-  let tempQMI 0 ;variavel temporaria do qmi
+  let tempQMI 0
+  let N_intervals 0;
 
-  ;formula do qmi sqrt(( x1^2 + x2^2 + xn^2) / n)
-  ask patches with [length time-interval-visits != 0]
-  [
-    set tempQMI tempQMI + last time-interval-visits ^ 2
+  ask patches [
+    foreach time-interval-visits[
+       set tempQMI tempQMI + ? ^ 2
+       set N_intervals N_intervals + 1
+    ]
   ]
-  set tempQMI tempQMI / count patches with [ length time-interval-visits != 0]
+  set tempQMI tempQMI / N_intervals
   set qmi precision (sqrt tempQMI) 2
 end
 
@@ -431,9 +429,7 @@ to-report min-of-4-matrix
 end
 
 to-report sync-matrix [matrix1 matrix2] ;sincroniza as duas matrizes passadas
-  let matrix3 matrix1
-  print matrix:pretty-print-text matrix1
-  print matrix:pretty-print-text matrix2
+  let matrix3 (matrix:plus matrix1 matrix2) ;matrix3 é a soma das matrizes 1 e 2
 
   let i 0
   let j 0
@@ -443,13 +439,12 @@ to-report sync-matrix [matrix1 matrix2] ;sincroniza as duas matrizes passadas
     while [j < max-pxcor + 1]
     [
       let value max (list (matrix:get matrix1 i j) (matrix:get matrix2 i j))
-      ;set media (round (media / 2)) ;faz a media de cada valor da lista
       matrix:set matrix3 i j value  ;e atribui na matriz q sera retornada
       set j j + 1
     ]
     set i i + 1
   ]
-  print matrix:pretty-print-text matrix3
+
   report matrix3
 end
 
@@ -472,8 +467,8 @@ end
 GRAPHICS-WINDOW
 70
 10
-486
-447
+780
+741
 -1
 -1
 14.0
@@ -487,9 +482,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-28
+49
 0
-28
+49
 0
 0
 1
@@ -552,9 +547,9 @@ SLIDER
 83
 time-between-ants
 time-between-ants
-2
+1
 2000
-2
+1
 1
 1
 NIL

@@ -246,14 +246,16 @@ to go
 end
 
 to qmi-calculator
-  let tempQMI 0 ;variavel temporaria do qmi
+  let tempQMI 0
+  let N_intervals 0;
 
-  ;formula do qmi sqrt(( x1^2 + x2^2 + xn^2) / n)
-  ask patches with [length time-interval-visits != 0]
-  [
-    set tempQMI tempQMI + last time-interval-visits ^ 2
+  ask patches [
+    foreach time-interval-visits[
+       set tempQMI tempQMI + ? ^ 2
+       set N_intervals N_intervals + 1
+    ]
   ]
-  set tempQMI tempQMI / count patches with [ length time-interval-visits != 0]
+  set tempQMI tempQMI / N_intervals
   set qmi precision (sqrt tempQMI) 2
 end
 
@@ -428,8 +430,8 @@ end
 GRAPHICS-WINDOW
 70
 10
-486
-447
+780
+741
 -1
 -1
 14.0
@@ -443,9 +445,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-28
+49
 0
-28
+49
 0
 0
 1

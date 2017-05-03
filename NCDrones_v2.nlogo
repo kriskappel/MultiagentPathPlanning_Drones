@@ -173,9 +173,8 @@ to go
 
      ask formigas [
        ;adiciona +1 na posição para qual a turtle foi
-       print ticks
+
        matrix:set own-matrix ([pycor] of patch-here) ([pxcor] of patch-here) (matrix:get own-matrix ([pycor] of patch-here) ([pxcor] of patch-here)) + 1
-       print matrix:pretty-print-text own-matrix
 
        ask patch-here[
          set u-value u-value + 1;atualiza o u-value
@@ -265,23 +264,16 @@ to go
 end
 
 to qmi-calculator
-  let tempQMI 0 ;variavel temporaria do qmi
-  let oneNumberQMI 0
-  let sumofpatches 0
+  let tempQMI 0
+  let N_intervals 0;
 
-  ;formula do qmi sqrt(( x1^2 + x2^2 + xn^2) / n)
-  ask patches with [length time-interval-visits != 0]
-  [
-    let i 0
-    while [i < length time-interval-visits]
-    [
-      set oneNumberQMI oneNumberQMI + item i time-interval-visits
-      set i i + 1
+  ask patches [
+    foreach time-interval-visits[
+       set tempQMI tempQMI + ? ^ 2
+       set N_intervals N_intervals + 1
     ]
-    set sumofpatches sumofpatches + length time-interval-visits
-    set tempQMI tempQMI + oneNumberQMI ^ 2
   ]
-  set tempQMI tempQMI / count patches with [ length time-interval-visits != 0]
+  set tempQMI tempQMI / N_intervals
   set qmi precision (sqrt tempQMI) 2
 end
 
@@ -437,10 +429,6 @@ to-report min-of-4-matrix
 end
 
 to-report sync-matrix [matrix1 matrix2] ;sincroniza as duas matrizes passadas
-  print " "
-  print matrix:pretty-print-text matrix1
-  print " "
-  print matrix:pretty-print-text matrix2
   let matrix3 (matrix:plus matrix1 matrix2) ;matrix3 é a soma das matrizes 1 e 2
 
   let i 0
@@ -453,12 +441,12 @@ to-report sync-matrix [matrix1 matrix2] ;sincroniza as duas matrizes passadas
       let media (matrix:get matrix3 i j)
       set media (round (media / 2)) ;faz a media de cada valor da lista
       matrix:set matrix3 i j media  ;e atribui na matriz q sera retornada
+
       set j j + 1
     ]
     set i i + 1
   ]
-  print " "
-  print matrix:pretty-print-text matrix3
+
   report matrix3
 end
 
@@ -481,8 +469,8 @@ end
 GRAPHICS-WINDOW
 70
 10
-486
-447
+780
+741
 -1
 -1
 14.0
@@ -496,9 +484,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-28
+49
 0
-28
+49
 0
 0
 1
