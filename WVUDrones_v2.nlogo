@@ -244,20 +244,15 @@ to go
        let flagSync 0;flag para saber se foi sincronizado ou nao
        ask other turtles-on patches in-radius 3
        [
-         if (not member? self [already-sync] of myself);se a turtle nao e membro do vetor de turtles ja sincronizada dai sincroniza
-         [
+
            set newMatrix sync-matrix own-matrix firstMatrix;passa a matriz das duas turtles para sincronizar
-           set own-matrix newMatrix ;seta o valor na matrix do outro agente
+
            set flagSync 1
-         ]
+
 
        ]
        if (flagSync = 1)
        [set own-matrix newMatrix];seta o valor da matrix no agente inicial, caso tenha algum agente na volta em que o valor tambem foi alterado
-
-       set already-sync other turtles-on patches in-radius 3
-       ;adiciona os agentes ao redor na lista de ja sincronizados, quando nao há nenhum agente na volta essa lista fica zerada,
-       ;então assim que aparecer um agente novamente esse valor é atualizado
 
 
        ask neighborMin[
@@ -276,17 +271,18 @@ to go
 end
 
 to qmi-calculator
-  let tempQMI 0 ;variavel temporaria do qmi
+  let tempQMI 0
+  let N_intervals 0;
 
-  ;formula do qmi sqrt(( x1^2 + x2^2 + xn^2) / n)
-  ask patches with [length time-interval-visits != 0]
-  [
-    set tempQMI tempQMI + last time-interval-visits ^ 2
+  ask patches [
+    foreach time-interval-visits[
+       set tempQMI tempQMI + ? ^ 2
+       set N_intervals N_intervals + 1
+    ]
   ]
-  set tempQMI tempQMI / count patches with [ length time-interval-visits != 0]
+  set tempQMI tempQMI / N_intervals
   set qmi precision (sqrt tempQMI) 2
 end
-
 to sdf-calculator
   set sdf precision (standard-deviation [u-value] of patches) 2
 end
@@ -545,7 +541,7 @@ number-of-ants
 number-of-ants
 1
 5
-1
+2
 1
 1
 NIL
@@ -558,9 +554,9 @@ SLIDER
 83
 time-between-ants
 time-between-ants
-0
+1
 2000
-102
+1
 1
 1
 NIL
