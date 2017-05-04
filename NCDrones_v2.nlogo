@@ -213,8 +213,10 @@ to go
        ask other turtles-on patches in-radius 3
        [
            set newMatrix sync-matrix own-matrix firstMatrix;passa a matriz das duas turtles para sincronizar
-
+           set firstMatrix newMatrix
+           let otherMatrix matrix:times newMatrix 1
            set flag 1
+           set own-matrix otherMatrix
        ]
        if (flag = 1)
        [set own-matrix newMatrix];seta o valor da matrix no agente inicial, caso tenha algum agente na volta em que o valor tambem foi alterado
