@@ -380,7 +380,9 @@ to-report min-of-4-neighbor
 
     ;por final se nao caiu em nenhuma das condições anteriores só resta testar o atras
     ifelse member? patch-ahead -1 possible-patches
-    [report patch-ahead -1]
+    [
+      set turn-back turn-back + 1
+      report patch-ahead -1]
     [report patch-here]
 
 end
