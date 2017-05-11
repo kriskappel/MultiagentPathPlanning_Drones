@@ -452,6 +452,8 @@ to-report sync-matrix [matrix1 matrix2] ;sincroniza as duas matrizes passadas
     ]
     set i i + 1
   ]
+  print "synced"
+  print matrix:pretty-print-text matrix3
 
   report matrix3
 end
