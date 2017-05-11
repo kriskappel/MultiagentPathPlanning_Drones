@@ -150,13 +150,15 @@ to go
 
        ifelse(sentido = "indo")[
          ifelse(direcao = "right" )
-         [ set heading heading + 90
+         [ set turn-side turn-side + 1
+           set heading heading + 90
            fd 1
            set heading heading + 90
            set direcao "left"
          ]
          [ set heading heading - 90
            fd 1
+           set turn-side turn-side + 1
            set heading heading - 90
            set direcao "right"
          ]
@@ -165,11 +167,13 @@ to go
          ifelse(direcao = "right" )
          [ set heading heading - 90
            fd 1
+           set turn-side turn-side + 1
            set heading heading - 90
            set direcao "left"
          ]
          [ set heading heading + 90
            fd 1
+           set turn-side turn-side + 1
            set heading heading + 90
            set direcao "right"
          ]

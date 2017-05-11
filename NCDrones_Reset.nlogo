@@ -495,7 +495,6 @@ to-report set-zeros [matrix]
   set matrix matrix:times-scalar matrix 0
   report matrix
 end
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 70
