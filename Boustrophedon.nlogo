@@ -1,8 +1,10 @@
+
 breed [formigas]
 
 globals[
    patch-fire
    number-of-fires
+
    list-of-fires
    list-of-ticks
 
@@ -17,17 +19,26 @@ globals[
    sd-frequency-of-visits
 
    intrvl-visits
+   incremento
+   sdf
+   qmi
+
+   turn-side
+   turn-back
+   last-coverage
 ]
 
 turtles-own[
-  sentido
-  direcao
+   sentido
+   u-interno
+   direcao
 ]
 
 patches-own[
    u-value
    time-interval-visits
    visita-anterior
+   cores
 ]
 
 to setup
@@ -43,6 +54,7 @@ to setup-patches
     set pcolor white
     set u-value 0
     set time-interval-visits n-values 0[0]
+    set cores n-values 0[0]
     set visita-anterior 0
 
     set plabel u-value
@@ -51,6 +63,7 @@ to setup-patches
 
   set number-of-fires 0
   set number-of-ants 1
+  set incremento 0
 
   set average-response-time 0
   set frequency-of-visits 0
@@ -63,6 +76,11 @@ to setup-patches
   set list-of-fires n-values 0[0]
   set list-of-ticks n-values 0[0]
   set response-time n-values 0[0]
+
+  set sdf 0
+  set qmi 0
+  set turn-side 0
+  set turn-back 0
 
   let i 0
   let j 0
@@ -86,107 +104,24 @@ to setup-ants
     set size 1
     set heading 0
 
-    set sentido "indo"
+    set u-interno 98 + incremento
+    set sentido "close"
+
     set direcao "right"
 
     ask patch-here[
        set u-value number-of-ants
        set plabel u-value
-       set time-interval-visits lput ticks  time-interval-visits
+       set pcolor 98 + incremento
+       set cores lput (98 + incremento) cores
+       set time-interval-visits lput ticks time-interval-visits
        set visita-anterior ticks
-
-       show word "u-value " u-value
-       show word "time-interval" time-interval-visits
-       show word "visita-anterior" visita-anterior
     ]
+
+    set incremento incremento + 10
   ]
 end
 
-to start-fire
-  ; Trata-se de um novo foco de incendio (vetor)
-  let nova-lista n-values 0[0]
-
-  ; Cada novo foco contem o numero de ticks em que se originou o fogo
-  ; e os patches que compoem o incendio naquele local
-  ; Cada foco eh inserido dentro de uma
-  ; lista contendo todos os incendios (matriz)
-
-  ask patch random-pxcor random-pycor[
-     set pcolor 15
-
-     set nova-lista lput self nova-lista
-     set list-of-fires lput nova-lista list-of-fires
-     set list-of-ticks lput ticks list-of-ticks
-  ]
-end
-
-to spread-fire
-   if(ticks mod 100 = 0 and ticks > 1)[
-     start-fire
-
-     let k 0
-
-     ; Para cada foco de incendio contendo varios patches
-     ; expande o fogo para um vizinho
-     foreach list-of-fires [
-
-       ask [ one-of neighbors ] of one-of ? [
-         let novo-patch self
-
-         ask novo-patch [
-            set pcolor 15
-         ]
-
-         ; Atualizando o foco de incendio dentro da lista geral
-         set ? lput novo-patch ?
-         set list-of-fires replace-item k list-of-fires ?
-       ]
-       set k k + 1
-     ]
-   ]
-end
-
-; O agente detecta o fogo em um raio de 3 patches de distancia
-; Neste caso, ele apaga o fogo (pinta de azul) e
-; remove da lista geral a lista contendo o foco de incendio
-
-to delete-fire
- if(count(patches in-radius 3 with [pcolor = 15]) > 0)[
-
-   let k 0
-   (foreach list-of-fires [
-      let p one-of patches in-radius 3 with[ pcolor = 15 ]
-
-      if(p != nobody)[
-        ask p [
-
-          if(member? self ?)[
-            (foreach ? [
-              ask ?1 [ set pcolor 85 ]
-            ])
-            set response-time lput (ticks - (item k list-of-ticks)) response-time
-
-            ;show word "Incendio " k
-            ;show word "ticks de inicio" list-of-ticks
-            ;show word "lista de fogos" list-of-fires
-            ;show word "tempo de resposta" response-time
-
-            set list-of-ticks remove-item k list-of-ticks
-            set list-of-fires remove ? list-of-fires
-
-            set number-of-fires number-of-fires + 1
-            ;set average-response-time mean response-time
-
-            ;if(length response-time > 1)
-            ;[ set sd-average-response-time standard-deviation response-time ]
-          ]
-          stop
-        ]
-      ]
-      set k k + 1
-   ])
- ]
-end
 
 ;; Libera novos drones a cada intervalo de tempo especifico
 
@@ -198,15 +133,11 @@ to create-ants
 end
 
 to go
-  ;while[ticks <= 10000][
-   spread-fire
+   ;while[ ticks <= 10000 ][
+
    create-ants
 
    ask formigas [
-
-     delete-fire
-
-     ; Movimentacao padrao de vai-e-vem
 
      ifelse(patch-ahead 1 != nobody)
      [ fd 1 ]
@@ -261,88 +192,41 @@ to go
        set visita-anterior ticks
      ]
    ]
-
+   qmi-calculator
+   sdf-calculator
+   set last-coverage min [u-value] of patches
    tick
 
-   frequency-interval-visits
    ;do-plots
    ;]
 end
 
-; Frequencia de visitas em cada patch
-; e o intervalo de tempo entre cada visita aos patches
-; Também captura a media e o desvio padrao do tempo de resposta
+to qmi-calculator
+  let tempQMI 0
+  let N_intervals 0;
 
-to frequency-interval-visits
-
-   if(ticks = 10000)[
-
-      ; Media e desvio padrao do tempo de resposta
-      set average-response-time mean response-time
-      set sd-average-response-time standard-deviation response-time
-
-      ; Media e desvio padrao da frequencia de visitas entre todos os patches
-      set frequency-of-visits mean [u-value] of patches
-      set sd-frequency-of-visits standard-deviation [u-value] of patches
-
-      let m n-values 0[0]
-
-      ; Media de intervalo de tempo em que cada patch foi visitado
-      ask patches[
-         set m lput (mean time-interval-visits) m
-         ; show word "tempo de intervalo" time-interval-visits
-         ; show word "media" m
-      ]
-
-      ; Media e desvio padrao do intervalo entre cada visita de todos os patches
-      set m-time-interval-visits mean m
-      set sd-time-interval-visits standard-deviation m
-
-;      show word "Incendios apagados: " number-of-fires
-;      show word "Lista de tempos de resposta: " response-time
-;      show word "Tempo medio de resposta para apagar cada incendio: " average-response-time
-;      show word "Desvio padrao: " sd-average-response-time
-;      show word "Frequencia de visitas: " frequency-of-visits
-;      show word "Desvio padrao: " sd-frequency-of-visits
-;      show word "Intervalo de tempo entre as visitas: " m-time-interval-visits
-;      show word "Desvio padrao: " sd-time-interval-visits
-
-      stop
-   ]
+  ask patches [
+    foreach time-interval-visits[
+       set tempQMI tempQMI + ? ^ 2
+       set N_intervals N_intervals + 1
+    ]
+  ]
+  set tempQMI tempQMI / N_intervals
+  set qmi precision (sqrt tempQMI) 2
 end
 
-to do-plots
-  let rsp-time 0
-  if( length response-time > 0 )
-  [ set rsp-time mean response-time ]
-
-  set-current-plot "Tempo de Resposta"
-  plot rsp-time
-
-  let md n-values 0[0]
-
-  ; Media de intervalo de tempo em que cada patch foi visitado
-  ask patches[
-     ifelse(length time-interval-visits = 0)
-     [ set md lput 0 md ]
-     [ set md lput (mean time-interval-visits) md ]
-  ]
-
-  ; Media e desvio padrao do intervalo entre cada visita de todos os patches
-  set intrvl-visits mean md
-
-  set-current-plot "Intervalo de Visitas"
-  plot intrvl-visits
+to sdf-calculator
+  set sdf precision (standard-deviation [u-value] of patches) 2
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-70
+315
 10
-488
-457
+1025
+741
 -1
 -1
-8.0
+14.0
 1
 10
 1
@@ -353,9 +237,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-50
+49
 0
-51
+49
 0
 0
 1
@@ -363,10 +247,10 @@ ticks
 30.0
 
 BUTTON
-494
-10
-557
-43
+1040
+475
+1103
+508
 setup
 setup
 NIL
@@ -380,10 +264,10 @@ NIL
 1
 
 BUTTON
-565
-10
-628
-43
+1111
+475
+1174
+508
 NIL
 go
 T
@@ -397,99 +281,134 @@ NIL
 1
 
 SLIDER
-635
-10
-772
-43
+1181
+475
+1318
+508
 number-of-ants
 number-of-ants
-0
-10
+1
+5
+5
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+1181
+515
+1321
+548
+time-between-ants
+time-between-ants
+1
+2000
 1
 1
 1
 NIL
 HORIZONTAL
 
+TEXTBOX
+1041
+240
+1191
+270
+The default file name will be NCResults.csv
+12
+0.0
+1
+
+BUTTON
+1046
+275
+1173
+308
+Change file name
+change-file
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
 MONITOR
-495
-50
-630
-95
-Incêndios Apagados
-number-of-fires
+1041
+565
+1176
+610
+Cobertura (%)
+last-coverage
+17
+1
+11
+
+MONITOR
+1041
+615
+1176
+660
+Curvas de 90°
+turn-side
+17
+1
+11
+
+MONITOR
+1181
+615
+1316
+660
+Curvas de 180°
+turn-back
+17
+1
+11
+
+MONITOR
+1116
+515
+1173
+560
+QMI
+qmi
+17
+1
+11
+
+MONITOR
+1046
+515
+1103
+560
+SDF
+sdf
 17
 1
 11
 
 PLOT
-495
-150
-815
-300
-Tempo de Resposta
-tempo
-ticks
+1041
+320
+1316
+470
+Cobertura (%)
+Numero
+Porcentagem
 0.0
-10000.0
+25.0
 0.0
-2000.0
+100.0
 true
 false
-"" ""
+"set-plot-x-range 0 1\nset-plot-y-range 0 100" "ifelse(empty? checked)\n[set-plot-x-range 0 1\nset-histogram-num-bars 1]\n\n[set-plot-x-range 0 length checked\nset-histogram-num-bars length checked]\n\nhistogram percentage"
 PENS
-"ticks" 1.0 0 -2674135 true "" ""
-
-MONITOR
-495
-100
-630
-145
-Tempo de Resposta
-mean response-time
-2
-1
-11
-
-PLOT
-495
-305
-815
-455
-Intervalo de Visitas
-tempo
-intervalo
-0.0
-10000.0
-0.0
-2000.0
-true
-false
-"" ""
-PENS
-"intervalo" 1.0 0 -11221820 true "" ""
-
-MONITOR
-635
-50
-770
-95
-Frequência de Visitas
-mean [u-value] of patches
-2
-1
-11
-
-MONITOR
-635
-100
-770
-145
-Intervalo de Visitas
-intrvl-visits
-2
-1
-11
+"default" 1.0 1 -14730904 true "histogram percentage" "histogram percentage"
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -839,18 +758,67 @@ NetLogo 5.3.1
 @#$#@#$#@
 @#$#@#$#@
 <experiments>
-  <experiment name="Boustrophedon" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="LRTA* 5k" repetitions="30" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <exitCondition>ticks &gt;= 5000</exitCondition>
+    <metric>qmi</metric>
+    <metric>sdf</metric>
+    <metric>number-of-coverages</metric>
+    <metric>turn-side</metric>
+    <metric>turn-back</metric>
+    <enumeratedValueSet variable="number-of-ants">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="time-between-ants">
+      <value value="1"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="LRTA* 10k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 10000</exitCondition>
-    <metric>number-of-fires</metric>
-    <metric>average-response-time</metric>
-    <metric>sd-average-response-time</metric>
-    <metric>frequency-of-visits</metric>
-    <metric>sd-frequency-of-visits</metric>
-    <metric>m-time-interval-visits</metric>
-    <metric>sd-time-interval-visits</metric>
+    <metric>qmi</metric>
+    <metric>sdf</metric>
+    <metric>number-of-coverages</metric>
+    <metric>turn-side</metric>
+    <metric>turn-back</metric>
     <enumeratedValueSet variable="number-of-ants">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="time-between-ants">
+      <value value="1"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="LRTA* 15k" repetitions="30" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <exitCondition>ticks &gt;= 15000</exitCondition>
+    <metric>qmi</metric>
+    <metric>sdf</metric>
+    <metric>number-of-coverages</metric>
+    <metric>turn-side</metric>
+    <metric>turn-back</metric>
+    <enumeratedValueSet variable="number-of-ants">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="time-between-ants">
+      <value value="1"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="LRTA* 20k" repetitions="30" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <exitCondition>ticks &gt;= 20000</exitCondition>
+    <metric>qmi</metric>
+    <metric>sdf</metric>
+    <metric>number-of-coverages</metric>
+    <metric>turn-side</metric>
+    <metric>turn-back</metric>
+    <enumeratedValueSet variable="number-of-ants">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="time-between-ants">
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>

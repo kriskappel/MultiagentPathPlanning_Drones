@@ -353,7 +353,7 @@ MONITOR
 1176
 610
 Cobertura (%)
-percentage
+last-coverage
 17
 1
 11
