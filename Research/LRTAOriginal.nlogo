@@ -41,6 +41,9 @@ globals[
 
    sdf
    qmi
+
+   csv-curve-list
+   number-of-coverages
 ]
 
 turtles-own[
@@ -218,8 +221,14 @@ to go
        ]
      ]
      percentage-calculator ;atualiza o vetor de percentage, que é o vetor de porcentagem de coberturas com relação ao vetor checked
-     sdf-calculator ;recalcula e atualiza o sdf
-     qmi-calculator ;recalcula e atualiza o qmi
+     if(ticks = 4999 or ticks = 9999 or ticks =  14999 or ticks = 19999)[
+       sdf-calculator ;recalcula e atualiza o sdf
+       qmi-calculator ;recalcula e atualiza o qmi
+
+       ask min-one-of patches [u-value][
+         set number-of-coverages u-value
+       ]
+     ]
      tick
 
 end
@@ -261,32 +270,6 @@ to set-file-name
   ]
 end
 
-to export-to-csv
-  if file-exists? file
-  [ file-delete file ]
-  file-open file
-  file-print (word "Indices:")
-  file-print csv:to-row index-list
-  file-print (word "Total de curvas")
-  ;file-print "\n"
-  file-print csv:to-row curve-list
-
-  let i 0
-
-  while [i < count turtles]
-  [
-    file-print (word "Turtle" i)
-    ask turtle i
-    [
-      file-print csv:to-row personal-curve-list
-    ]
-    set i i + 1
-  ]
-
-  file-close
-
-  ;set aux-index aux-index + 1
-end
 
 to setup-lists
 
@@ -316,6 +299,7 @@ to add1-curve-list
 
    set front-steps 1 ;poe o numero de passos dados como 1 pois zera e depois ele vai se mover uma vez pra frente em seguida
 
+   set csv-curve-list csv:to-row curve-list
 end
 
 to percentage-calculator
@@ -335,13 +319,13 @@ to percentage-calculator
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-70
+315
 10
-780
-741
+1095
+811
 -1
 -1
-14.0
+15.4
 1
 10
 1
@@ -362,10 +346,10 @@ ticks
 30.0
 
 BUTTON
-494
-10
-557
-43
+1040
+475
+1103
+508
 setup
 setup
 NIL
@@ -379,10 +363,10 @@ NIL
 1
 
 BUTTON
-565
-10
-628
-43
+1111
+475
+1174
+508
 NIL
 go
 T
@@ -396,25 +380,25 @@ NIL
 1
 
 SLIDER
-635
-10
-772
-43
+1181
+475
+1318
+508
 number-of-ants
 number-of-ants
 1
 5
-2
+4
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-635
-50
-775
-83
+1181
+515
+1321
+548
 time-between-ants
 time-between-ants
 1
@@ -426,20 +410,20 @@ NIL
 HORIZONTAL
 
 TEXTBOX
-495
-205
-645
-235
+1041
+240
+1191
+270
 The default file name will be NCResults.csv
 12
 0.0
 1
 
 BUTTON
-500
-240
-627
-273
+1046
+275
+1173
+308
 Change file name
 change-file
 NIL
@@ -453,10 +437,10 @@ NIL
 1
 
 MONITOR
-495
-100
-630
-145
+1041
+565
+1176
+610
 Cobertura (%)
 percentage
 17
@@ -464,10 +448,10 @@ percentage
 11
 
 MONITOR
-495
-150
-630
-195
+1041
+615
+1176
+660
 Curvas de 90°
 turn-side
 17
@@ -475,10 +459,10 @@ turn-side
 11
 
 MONITOR
-635
-150
-770
-195
+1181
+615
+1316
+660
 Curvas de 180°
 turn-back
 17
@@ -486,10 +470,10 @@ turn-back
 11
 
 MONITOR
-570
-50
-627
-95
+1116
+515
+1173
+560
 QMI
 qmi
 17
@@ -497,10 +481,10 @@ qmi
 11
 
 MONITOR
-500
-50
-557
-95
+1046
+515
+1103
+560
 SDF
 sdf
 17
@@ -508,10 +492,10 @@ sdf
 11
 
 PLOT
-495
-285
-770
-435
+1041
+320
+1316
+470
 Cobertura (%)
 Numero
 Porcentagem
@@ -873,18 +857,67 @@ NetLogo 5.3.1
 @#$#@#$#@
 @#$#@#$#@
 <experiments>
-  <experiment name="Node Counting" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="LRTA* 5k" repetitions="30" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <exitCondition>ticks &gt;= 5000</exitCondition>
+    <metric>qmi</metric>
+    <metric>sdf</metric>
+    <metric>number-of-coverages</metric>
+    <metric>turn-side</metric>
+    <metric>turn-back</metric>
+    <enumeratedValueSet variable="number-of-ants">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="time-between-ants">
+      <value value="1"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="LRTA* 10k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 10000</exitCondition>
-    <metric>number-of-fires</metric>
-    <metric>average-response-time</metric>
-    <metric>sd-average-response-time</metric>
-    <metric>frequency-of-visits</metric>
-    <metric>sd-frequency-of-visits</metric>
-    <metric>m-time-interval-visits</metric>
-    <metric>sd-time-interval-visits</metric>
+    <metric>qmi</metric>
+    <metric>sdf</metric>
+    <metric>number-of-coverages</metric>
+    <metric>turn-side</metric>
+    <metric>turn-back</metric>
     <enumeratedValueSet variable="number-of-ants">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="time-between-ants">
+      <value value="1"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="LRTA* 15k" repetitions="30" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <exitCondition>ticks &gt;= 15000</exitCondition>
+    <metric>qmi</metric>
+    <metric>sdf</metric>
+    <metric>number-of-coverages</metric>
+    <metric>turn-side</metric>
+    <metric>turn-back</metric>
+    <enumeratedValueSet variable="number-of-ants">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="time-between-ants">
+      <value value="1"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="LRTA* 20k" repetitions="30" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <exitCondition>ticks &gt;= 20000</exitCondition>
+    <metric>qmi</metric>
+    <metric>sdf</metric>
+    <metric>number-of-coverages</metric>
+    <metric>turn-side</metric>
+    <metric>turn-back</metric>
+    <enumeratedValueSet variable="number-of-ants">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="time-between-ants">
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>

@@ -42,6 +42,8 @@ globals[
    sdf
    qmi
    number-of-coverages
+
+   csv-curve-list
 ]
 
 turtles-own[
@@ -311,6 +313,8 @@ to add1-curve-list
    set personal-curve-list replace-item front-steps personal-curve-list personal-item-list
 
    set front-steps 1 ;poe o numero de passos dados como 1 pois zera e depois ele vai se mover uma vez pra frente em seguida
+
+   set csv-curve-list csv:to-row curve-list
 
 end
 
