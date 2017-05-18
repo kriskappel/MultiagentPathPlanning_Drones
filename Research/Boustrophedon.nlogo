@@ -173,7 +173,7 @@ to go
            set turn-side turn-side + 1
            add1-curve-list
            fd 1
-           ;set front-steps front-steps + 1
+           set front-steps front-steps + 1
            set heading heading + 90
            set turn-side turn-side + 1
            add1-curve-list
@@ -183,6 +183,7 @@ to go
            set turn-side turn-side + 1
            add1-curve-list
            fd 1
+           set front-steps front-steps + 1
            set heading heading - 90
            set turn-side turn-side + 1
            add1-curve-list
@@ -195,6 +196,7 @@ to go
            set turn-side turn-side + 1
            add1-curve-list
            fd 1
+           set front-steps front-steps + 1
            set heading heading - 90
            set turn-side turn-side + 1
            add1-curve-list
@@ -204,6 +206,7 @@ to go
            set turn-side turn-side + 1
            add1-curve-list
            fd 1
+           set front-steps front-steps + 1
            set heading heading + 90
            set turn-side turn-side + 1
            add1-curve-list
@@ -290,8 +293,6 @@ to add1-curve-list
    set front-steps 0 ;zera numero de passos
 
    set csv-curve-list csv:to-row curve-list
-
-   show curve-list
 end
 
 to-report limit
