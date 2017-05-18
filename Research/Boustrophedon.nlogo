@@ -156,7 +156,10 @@ to go
      ; gira 90º e anda para frente novamente
 
      ifelse(limit)
-     [ fd 1 ]
+     [
+       fd 1
+       set front-steps front-steps + 1
+     ]
      [
        ifelse(min-pxcor = pxcor or pxcor - 1 = limitx )
        [ set sentido "indo" ]
@@ -167,26 +170,43 @@ to go
        ifelse(sentido = "indo")[
          ifelse(direcao = "right" )
          [ set heading heading + 90
+           set turn-side turn-side + 1
+           add1-curve-list
            fd 1
+           ;set front-steps front-steps + 1
            set heading heading + 90
+           set turn-side turn-side + 1
+           add1-curve-list
            set direcao "left"
          ]
          [ set heading heading - 90
+           set turn-side turn-side + 1
+           add1-curve-list
            fd 1
            set heading heading - 90
+           set turn-side turn-side + 1
+           add1-curve-list
            set direcao "right"
          ]
        ]
        [
          ifelse(direcao = "right" )
          [ set heading heading - 90
+           set turn-side turn-side + 1
+           add1-curve-list
            fd 1
            set heading heading - 90
+           set turn-side turn-side + 1
+           add1-curve-list
            set direcao "left"
          ]
          [ set heading heading + 90
+           set turn-side turn-side + 1
+           add1-curve-list
            fd 1
            set heading heading + 90
+           set turn-side turn-side + 1
+           add1-curve-list
            set direcao "right"
          ]
        ]
@@ -267,11 +287,11 @@ to add1-curve-list
    set personal-item-list personal-item-list + 1
    set personal-curve-list replace-item front-steps personal-curve-list personal-item-list
 
-   set front-steps 1 ;poe o numero de passos dados como 1 pois zera e depois ele vai se mover uma vez pra frente em seguida
+   set front-steps 0 ;zera numero de passos
 
    set csv-curve-list csv:to-row curve-list
 
-   ;show curve-list
+   show curve-list
 end
 
 to-report limit
@@ -844,6 +864,7 @@ NetLogo 5.3.1
     <metric>number-of-coverages</metric>
     <metric>turn-side</metric>
     <metric>turn-back</metric>
+    <metric>csv-curve-list</metric>
     <enumeratedValueSet variable="number-of-ants">
       <value value="4"/>
     </enumeratedValueSet>
