@@ -28,7 +28,9 @@ globals[
    curve-list
    index-list
    csv-curve-list
-
+   turn-back
+   checked
+   percentage
 
 ]
 
@@ -291,6 +293,9 @@ to-report limit
     ;[report false]
   ;]
 end
+
+to change-file
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 315
@@ -479,9 +484,8 @@ Porcentagem
 100.0
 true
 false
-"set-plot-x-range 0 1\nset-plot-y-range 0 100" "ifelse(empty? checked)\n[set-plot-x-range 0 1\nset-histogram-num-bars 1]\n\n[set-plot-x-range 0 length checked\nset-histogram-num-bars length checked]\n\nhistogram percentage"
+"set-plot-x-range 0 1\nset-plot-y-range 0 100" ""
 PENS
-"default" 1.0 1 -14730904 true "histogram percentage" "histogram percentage"
 
 @#$#@#$#@
 ## WHAT IS IT?
