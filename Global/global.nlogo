@@ -48,6 +48,8 @@ globals[
    csv-curve-list
    ;tempQMI
    visited-patches
+
+   mean-map
 ]
 
 turtles-own[
@@ -115,6 +117,8 @@ to setup-patches
 
   let i 0
   let j 0
+
+  set mean-map 0
 
 
   repeat max-pxcor + 1 [
@@ -311,7 +315,6 @@ to go
        ]
 
        print-matrix own-matrix
-       floodfill 25 25
      ]
      percentage-calculator ;atualiza o vetor de percentage, que é o vetor de porcentagem de coberturas com relação ao vetor checked
      if(ticks = 4999 or ticks = 9999 or ticks =  14999 or ticks = 19999)[
@@ -323,6 +326,11 @@ to go
        ]
      ]
 
+     mean-the-map
+     ask patches
+     [
+       if(u-value < mean-map) [floodfill pxcor pycor]
+     ]
 
 
      tick
@@ -646,7 +654,7 @@ end
 
 to floodfill [x y]
 
-  ifelse((x = 20) or (y = 20) or (x = 30) or (y = 30)) or ((member? (patch x y)  visited-patches))
+  ifelse((member? (patch x y)  visited-patches))
   []
   [
   ask patch x y
@@ -676,17 +684,29 @@ to floodfill [x y]
     ask patch (x + 1)(y + 1)
     [ visitados (x + 1)(y + 1)]
   ]
+  ;set visited-patches []
   ]
 end
 
 to visitados [x y ]
   ask patch x y
   [
-    set visited-patches lput patch x y visited-patches
-    ;print (sentence x y)
-    set color-set color-set + 1
-    set pcolor color-set
+    if(u-value < mean-map)
+    [
+      set visited-patches lput patch x y visited-patches
+      ;print (sentence x y)
+      set color-set color-set + 1
+      set pcolor color-set
+    ]
   ]
+end
+
+to mean-the-map
+  ;let min-value min [u-value] of patches
+  ;let max-value max [u-value] of patches
+  ;let diff floor ((max-value - min-value) / 3)
+  ;set mean-map diff
+  set mean-map floor mean [u-value] of patches
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -740,7 +760,7 @@ BUTTON
 138
 NIL
 go
-NIL
+T
 1
 T
 OBSERVER
