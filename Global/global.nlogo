@@ -47,7 +47,8 @@ globals[
 
    csv-curve-list
    ;tempQMI
-   visited-patches
+   cluster
+   set_clusters
 
    mean-map
 ]
@@ -133,7 +134,8 @@ to setup-patches
     set i i + 1
   ]
 
-  set visited-patches []
+  set cluster []
+  set set_clusters[]
 
 end
 
@@ -654,7 +656,7 @@ end
 
 to floodfill [x y]
 
-  ifelse((member? (patch x y)  visited-patches))
+  ifelse((member? (patch x y)  cluster) or (member? (patch x y) set_clusters))
   []
   [
   ask patch x y
@@ -685,6 +687,7 @@ to floodfill [x y]
     [ visitados (x + 1)(y + 1)]
   ]
   ;set visited-patches []
+  set set_clusters lput cluster set_clusters
   ]
 end
 
@@ -693,7 +696,7 @@ to visitados [x y ]
   [
     if(u-value < mean-map)
     [
-      set visited-patches lput patch x y visited-patches
+      set cluster lput patch x y cluster
       ;print (sentence x y)
       set color-set color-set + 1
       set pcolor color-set
@@ -712,11 +715,11 @@ end
 GRAPHICS-WINDOW
 465
 10
-975
-541
+925
+491
 -1
 -1
-10.0
+15.0
 1
 10
 1
@@ -727,9 +730,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-49
+29
 0
-49
+29
 0
 0
 1
@@ -794,7 +797,7 @@ time-between-ants
 time-between-ants
 1
 2000
-1
+50
 1
 1
 NIL
