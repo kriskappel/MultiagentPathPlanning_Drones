@@ -49,6 +49,7 @@ globals[
    ;tempQMI
    cluster
    set_clusters
+   watershed_patches
 
    mean-map
 ]
@@ -136,6 +137,7 @@ to setup-patches
 
   set cluster []
   set set_clusters[]
+  set watershed_patches []
 
 end
 
@@ -696,6 +698,7 @@ to visitados [x y ]
   [
     if(u-value < mean-map)
     [
+      set watershed_patches lput patch x y watershed_patches
       set cluster lput patch x y cluster
       ;print (sentence x y)
       set color-set color-set + 1
