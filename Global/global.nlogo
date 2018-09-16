@@ -50,6 +50,7 @@ globals[
    cluster
    set_clusters
    watershed_patches
+   ws-count
 
    mean-map
 ]
@@ -656,6 +657,58 @@ to print-matrix [matrix]
 end
 
 
+to-report test-valid-patch [x y]
+
+  if (patch x y) != nobody
+  [
+    if (not (member? (patch x y)  cluster) and not (member? (patch x y) set_clusters)) and ([u-value] of (patch x y) > mean-map)
+
+    [report true]
+  ]
+  report false
+
+end
+
+
+to wathershed [x y]
+  ifelse(length cluster > ws-count)
+  [
+    let selected-patch item ws-count cluster
+    if( test-valid-patch (x - 1)(y - 1) )[set cluster lput patch(x - 1)(y - 1) cluster]
+    if( test-valid-patch (x    )(y - 1) )[set cluster lput patch(x    )(y - 1) cluster]
+    if( test-valid-patch (x + 1)(y - 1) )[set cluster lput patch(x + 1)(y - 1) cluster]
+
+    if( test-valid-patch (x - 1)(y    ) )[set cluster lput patch(x - 1)(y    ) cluster]
+    if( test-valid-patch (x + 1)(y    ) )[set cluster lput patch(x + 1)(y    ) cluster]
+
+
+    if( test-valid-patch (x - 1)(y + 1) )[set cluster lput patch(x - 1)(y + 1) cluster]
+    if( test-valid-patch (x    )(y + 1) )[set cluster lput patch(x    )(y + 1) cluster]
+    if( test-valid-patch (x + 1)(y + 1) )[set cluster lput patch(x + 1)(y + 1) cluster]
+
+    set ws-count ws-count + 1
+  ]
+  [
+    set ws-count 0
+    color-map
+  ]
+
+end
+
+to color-map
+  let i 0
+  while [(i < length cluster)]
+  [
+    let patch-to-color item i cluster
+    ask patch-to-color[
+      set color-set color-set + 1
+      set pcolor color-set
+    ]
+  ]
+
+  set set_clusters lput cluster set_clusters
+end
+
 to floodfill [x y]
 
   ifelse((member? (patch x y)  cluster) or (member? (patch x y) set_clusters))
@@ -714,6 +767,7 @@ to mean-the-map
   ;set mean-map diff
   set mean-map floor mean [u-value] of patches
 end
+
 @#$#@#$#@
 GRAPHICS-WINDOW
 465
