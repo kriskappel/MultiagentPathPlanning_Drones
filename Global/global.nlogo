@@ -334,7 +334,11 @@ to go
      mean-the-map
      ask patches
      [
-       if(u-value < mean-map) [floodfill pxcor pycor]
+       if(u-value < mean-map and not member? (patch pxcor pycor) cluster) [ ;print "oi"
+         wathershed pxcor pycor
+         color-map
+         stop
+       ]
      ]
 
 
@@ -658,12 +662,29 @@ end
 
 
 to-report test-valid-patch [x y]
-
+  print patch x y
   if (patch x y) != nobody
   [
-    if (not (member? (patch x y)  cluster) and not (member? (patch x y) set_clusters)) and ([u-value] of (patch x y) > mean-map)
 
-    [report true]
+    if (not (member? (patch x y)  cluster) and not (member? (patch x y) set_clusters)) and ([u-value] of (patch x y) < mean-map)
+    [
+      let i 0
+      let flag_return true
+
+      while [i < length set_clusters]
+      [
+        let aux_cluster item i set_clusters
+
+        set i i + 1
+        if( (member? (patch x y) aux_cluster) )
+        [
+          set flag_return false
+        ]
+      ]
+
+      report flag_return
+    ]
+
   ]
   report false
 
@@ -671,10 +692,11 @@ end
 
 
 to wathershed [x y]
-  ifelse(length cluster > ws-count)
+  set cluster lput patch x y cluster
+  while[length cluster > ws-count]
   [
     let selected-patch item ws-count cluster
-    if( test-valid-patch (x - 1)(y - 1) )[set cluster lput patch(x - 1)(y - 1) cluster]
+    if( test-valid-patch (x - 1)(y - 1) )[print "teste" set cluster lput patch(x - 1)(y - 1) cluster]
     if( test-valid-patch (x    )(y - 1) )[set cluster lput patch(x    )(y - 1) cluster]
     if( test-valid-patch (x + 1)(y - 1) )[set cluster lput patch(x + 1)(y - 1) cluster]
 
@@ -688,10 +710,6 @@ to wathershed [x y]
 
     set ws-count ws-count + 1
   ]
-  [
-    set ws-count 0
-    color-map
-  ]
 
 end
 
@@ -704,9 +722,12 @@ to color-map
       set color-set color-set + 1
       set pcolor color-set
     ]
+    set i i + 1
   ]
-
-  set set_clusters lput cluster set_clusters
+  set ws-count 0
+  if not empty? cluster
+  [set set_clusters lput cluster set_clusters]
+  set cluster []
 end
 
 to floodfill [x y]
@@ -767,7 +788,6 @@ to mean-the-map
   ;set mean-map diff
   set mean-map floor mean [u-value] of patches
 end
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 465
@@ -816,7 +836,7 @@ NIL
 BUTTON
 1110
 105
-1173
+1172
 138
 NIL
 go
