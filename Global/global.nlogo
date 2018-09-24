@@ -661,8 +661,36 @@ to print-matrix [matrix]
 end
 
 
+to wathershed [x y]
+  let i 0
+  let flag_valid false
+  if test-valid-patch x y
+  [
+    set cluster lput (patch x y ) cluster
+    spread x y
+    set flag_valid true
+  ]
+  set i i + 1
+
+
+
+  if(flag_valid)
+  [
+    while [i < length cluster]
+    [
+      let selected-patch item i cluster
+      spread [pxcor] of selected-patch [pycor] of selected-patch
+      set i i + 1
+    ]
+  ]
+
+  set set_clusters lput cluster set_clusters
+
+
+end
+
 to-report test-valid-patch [x y]
-  print patch x y
+  ;print patch x y
   if (patch x y) != nobody
   [
 
@@ -691,25 +719,22 @@ to-report test-valid-patch [x y]
 end
 
 
-to wathershed [x y]
-  set cluster lput patch x y cluster
-  while[length cluster > ws-count]
-  [
-    let selected-patch item ws-count cluster
-    if( test-valid-patch (x - 1)(y - 1) )[print "teste" set cluster lput patch(x - 1)(y - 1) cluster]
-    if( test-valid-patch (x    )(y - 1) )[set cluster lput patch(x    )(y - 1) cluster]
-    if( test-valid-patch (x + 1)(y - 1) )[set cluster lput patch(x + 1)(y - 1) cluster]
+to spread [x y]
+  ;while[length cluster > ws-count]
+  ;[
+   ; let selected-patch item ws-count cluster
+  if( test-valid-patch (x - 1)(y - 1) )[set cluster lput patch(x - 1)(y - 1) cluster]
+  if( test-valid-patch (x    )(y - 1) )[set cluster lput patch(x    )(y - 1) cluster]
+  if( test-valid-patch (x + 1)(y - 1) )[set cluster lput patch(x + 1)(y - 1) cluster]
 
-    if( test-valid-patch (x - 1)(y    ) )[set cluster lput patch(x - 1)(y    ) cluster]
-    if( test-valid-patch (x + 1)(y    ) )[set cluster lput patch(x + 1)(y    ) cluster]
+  if( test-valid-patch (x - 1)(y    ) )[set cluster lput patch(x - 1)(y    ) cluster]
+  if( test-valid-patch (x + 1)(y    ) )[set cluster lput patch(x + 1)(y    ) cluster]
 
 
-    if( test-valid-patch (x - 1)(y + 1) )[set cluster lput patch(x - 1)(y + 1) cluster]
-    if( test-valid-patch (x    )(y + 1) )[set cluster lput patch(x    )(y + 1) cluster]
-    if( test-valid-patch (x + 1)(y + 1) )[set cluster lput patch(x + 1)(y + 1) cluster]
-
-    set ws-count ws-count + 1
-  ]
+  if( test-valid-patch (x - 1)(y + 1) )[set cluster lput patch(x - 1)(y + 1) cluster]
+  if( test-valid-patch (x    )(y + 1) )[set cluster lput patch(x    )(y + 1) cluster]
+  if( test-valid-patch (x + 1)(y + 1) )[set cluster lput patch(x + 1)(y + 1) cluster]
+  ;]
 
 end
 
@@ -730,56 +755,57 @@ to color-map
   set cluster []
 end
 
-to floodfill [x y]
-
-  ifelse((member? (patch x y)  cluster) or (member? (patch x y) set_clusters))
-  []
-  [
-  ask patch x y
-  [
-    visitados x y
-    ask patch (x - 1)(y - 1)
-    [ visitados (x - 1)(y - 1)]
-
-    ask patch (x)(y - 1)
-    [ visitados (x)(y - 1)]
-
-    ask patch (x + 1)(y - 1)
-    [ visitados (x + 1)(y - 1)]
-
-    ask patch (x - 1)(y)
-    [ visitados (x - 1)(y)]
-
-    ask patch (x + 1)(y)
-    [ visitados (x + 1)(y)]
-
-    ask patch (x - 1)(y + 1)
-    [ visitados (x - 1)(y + 1)]
-
-    ask patch (x)(y + 1)
-    [ visitados (x)(y + 1)]
-
-    ask patch (x + 1)(y + 1)
-    [ visitados (x + 1)(y + 1)]
-  ]
-  ;set visited-patches []
-  set set_clusters lput cluster set_clusters
-  ]
-end
-
-to visitados [x y ]
-  ask patch x y
-  [
-    if(u-value < mean-map)
-    [
-      set watershed_patches lput patch x y watershed_patches
-      set cluster lput patch x y cluster
-      ;print (sentence x y)
-      set color-set color-set + 1
-      set pcolor color-set
-    ]
-  ]
-end
+;
+;to floodfill [x y]
+;
+;  ifelse((member? (patch x y)  cluster) or (member? (patch x y) set_clusters))
+;  []
+;  [
+;  ask patch x y
+;  [
+;    visitados x y
+;    ask patch (x - 1)(y - 1)
+;    [ visitados (x - 1)(y - 1)]
+;
+;    ask patch (x)(y - 1)
+;    [ visitados (x)(y - 1)]
+;
+;    ask patch (x + 1)(y - 1)
+;    [ visitados (x + 1)(y - 1)]
+;
+;    ask patch (x - 1)(y)
+;    [ visitados (x - 1)(y)]
+;
+;    ask patch (x + 1)(y)
+;    [ visitados (x + 1)(y)]
+;
+;    ask patch (x - 1)(y + 1)
+;    [ visitados (x - 1)(y + 1)]
+;
+;    ask patch (x)(y + 1)
+;    [ visitados (x)(y + 1)]
+;
+;    ask patch (x + 1)(y + 1)
+;    [ visitados (x + 1)(y + 1)]
+;  ]
+;  ;set visited-patches []
+;  set set_clusters lput cluster set_clusters
+;  ]
+;end
+;
+;to visitados [x y ]
+;  ask patch x y
+;  [
+;    if(u-value < mean-map)
+;    [
+;      set watershed_patches lput patch x y watershed_patches
+;      set cluster lput patch x y cluster
+;      ;print (sentence x y)
+;      set color-set color-set + 1
+;      set pcolor color-set
+;    ]
+;  ]
+;end
 
 to mean-the-map
   ;let min-value min [u-value] of patches
