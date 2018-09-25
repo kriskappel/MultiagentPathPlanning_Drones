@@ -335,12 +335,12 @@ to go
      ask patches
      [
        if(u-value < mean-map and not member? (patch pxcor pycor) cluster) [ ;print "oi"
-         wathershed pxcor pycor
-         color-map
+         ;wathershed pxcor pycor
+         ;color-map
+
          stop
        ]
      ]
-
 
      tick
 
@@ -683,8 +683,8 @@ to wathershed [x y]
       set i i + 1
     ]
   ]
-
-  set set_clusters lput cluster set_clusters
+  if(not empty? cluster)
+  [set set_clusters lput cluster set_clusters]
 
 
 end
@@ -749,10 +749,10 @@ to color-map
     ]
     set i i + 1
   ]
-  set ws-count 0
-  if not empty? cluster
-  [set set_clusters lput cluster set_clusters]
-  set cluster []
+  ;set ws-count 0
+  ;if not empty? cluster
+  ;[set set_clusters lput cluster set_clusters]
+  ;set cluster []
 end
 
 ;
@@ -813,6 +813,11 @@ to mean-the-map
   ;let diff floor ((max-value - min-value) / 3)
   ;set mean-map diff
   set mean-map floor mean [u-value] of patches
+end
+
+to test-color
+  ask patches
+  [set pcolor 1]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
