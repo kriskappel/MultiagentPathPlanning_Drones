@@ -335,12 +335,13 @@ to go
      ask patches
      [
        if(u-value < mean-map and not member? (patch pxcor pycor) cluster) [ ;print "oi"
-         ;wathershed pxcor pycor
-         ;color-map
+         wathershed pxcor pycor
 
-         stop
+
+         ;stop
        ]
      ]
+
 
      tick
 
@@ -684,7 +685,9 @@ to wathershed [x y]
     ]
   ]
   if(not empty? cluster)
-  [set set_clusters lput cluster set_clusters]
+  [set set_clusters lput cluster set_clusters
+   set cluster []
+   color-map]
 
 
 end
@@ -740,14 +743,20 @@ end
 
 to color-map
   let i 0
-  while [(i < length cluster)]
+  let j 0
+  while[(j < length set_clusters)]
   [
-    let patch-to-color item i cluster
-    ask patch-to-color[
-      set color-set color-set + 1
-      set pcolor color-set
+    while [(i < length item j set_clusters)]
+    [
+      let list-to-color item j set_clusters
+      let patch-to-color item i list-to-color
+      ask patch-to-color[
+        set color-set color-set + 1
+        set pcolor color-set
+      ]
+      set i i + 1
     ]
-    set i i + 1
+    set j j + 1
   ]
   ;set ws-count 0
   ;if not empty? cluster
