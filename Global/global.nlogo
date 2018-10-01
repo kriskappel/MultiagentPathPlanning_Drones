@@ -53,6 +53,7 @@ globals[
    ws-count
 
    mean-map
+   map-matrix
 ]
 
 turtles-own[
@@ -692,6 +693,39 @@ to wathershed [x y]
 
 end
 
+to matrix-wathersed [x y]
+;  let coordinates []
+;  set coordinates lput x coordinates
+;  set coordinates lput y coordinates
+
+  let i 0
+  let flag_valid false
+  if matrix-test-valid-patch x y
+  [
+   set cluster lput (list x y) cluster
+   spread x y
+   set flag_valid true
+  ]
+  set i i + 1
+
+
+  if(flag_valid)
+  [
+    while [i < length cluster]
+    [
+      let selected-patch item i cluster
+      spread item 0 selected-patch item 1 selected-patch
+      set i i + 1
+    ]
+  ]
+  if(not empty? cluster)
+  [
+    set set_clusters lput cluster set_clusters
+    set cluster []
+  ]
+end
+
+
 to-report test-valid-patch [x y]
   ;print patch x y
   if (patch x y) != nobody
@@ -721,6 +755,36 @@ to-report test-valid-patch [x y]
 
 end
 
+to-report matrix-test-valid-patch [x y]
+  if (patch x y) != nobody
+  [
+
+    if (matrix:get map-matrix x y < mean-map)
+    [
+      if (not (member? (list x y) cluster))
+      [
+
+        let i 0
+        let flag_return true
+
+        while [i < length set_clusters]
+        [
+          let aux_cluster item i set_clusters
+
+          set i i + 1
+          if( (member? (list x y) aux_cluster) )
+          [
+            set flag_return false
+          ]
+        ]
+
+        report flag_return
+      ]
+    ]
+
+  ]
+  report false
+end
 
 to spread [x y]
   ;while[length cluster > ws-count]
@@ -739,6 +803,20 @@ to spread [x y]
   if( test-valid-patch (x + 1)(y + 1) )[set cluster lput patch(x + 1)(y + 1) cluster]
   ;]
 
+end
+
+to matrix-spread [x y]
+  if( test-valid-patch (x - 1)(y - 1) )[set cluster lput patch(x - 1)(y - 1) cluster]
+  if( test-valid-patch (x    )(y - 1) )[set cluster lput patch(x    )(y - 1) cluster]
+  if( test-valid-patch (x + 1)(y - 1) )[set cluster lput patch(x + 1)(y - 1) cluster]
+
+  if( test-valid-patch (x - 1)(y    ) )[set cluster lput patch(x - 1)(y    ) cluster]
+  if( test-valid-patch (x + 1)(y    ) )[set cluster lput patch(x + 1)(y    ) cluster]
+
+
+  if( test-valid-patch (x - 1)(y + 1) )[set cluster lput patch(x - 1)(y + 1) cluster]
+  if( test-valid-patch (x    )(y + 1) )[set cluster lput patch(x    )(y + 1) cluster]
+  if( test-valid-patch (x + 1)(y + 1) )[set cluster lput patch(x + 1)(y + 1) cluster]
 end
 
 to color-map
