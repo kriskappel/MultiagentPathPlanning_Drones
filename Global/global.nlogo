@@ -703,7 +703,7 @@ to matrix-wathersed [x y]
   if matrix-test-valid-patch x y
   [
    set cluster lput (list x y) cluster
-   spread x y
+   matrix-spread x y
    set flag_valid true
   ]
   set i i + 1
@@ -806,17 +806,17 @@ to spread [x y]
 end
 
 to matrix-spread [x y]
-  if( test-valid-patch (x - 1)(y - 1) )[set cluster lput patch(x - 1)(y - 1) cluster]
-  if( test-valid-patch (x    )(y - 1) )[set cluster lput patch(x    )(y - 1) cluster]
-  if( test-valid-patch (x + 1)(y - 1) )[set cluster lput patch(x + 1)(y - 1) cluster]
+  if( matrix-test-valid-patch (x - 1)(y - 1) )[set cluster lput (list (x - 1)(y - 1)) cluster]
+  if( matrix-test-valid-patch (x    )(y - 1) )[set cluster lput (list (x    )(y - 1)) cluster]
+  if( matrix-test-valid-patch (x + 1)(y - 1) )[set cluster lput (list (x + 1)(y - 1)) cluster]
 
-  if( test-valid-patch (x - 1)(y    ) )[set cluster lput patch(x - 1)(y    ) cluster]
-  if( test-valid-patch (x + 1)(y    ) )[set cluster lput patch(x + 1)(y    ) cluster]
+  if( matrix-test-valid-patch (x - 1)(y    ) )[set cluster lput (list (x - 1)(y    )) cluster]
+  if( matrix-test-valid-patch (x + 1)(y    ) )[set cluster lput (list (x + 1)(y    )) cluster]
 
 
-  if( test-valid-patch (x - 1)(y + 1) )[set cluster lput patch(x - 1)(y + 1) cluster]
-  if( test-valid-patch (x    )(y + 1) )[set cluster lput patch(x    )(y + 1) cluster]
-  if( test-valid-patch (x + 1)(y + 1) )[set cluster lput patch(x + 1)(y + 1) cluster]
+  if( matrix-test-valid-patch (x - 1)(y + 1) )[set cluster lput (list (x - 1)(y + 1)) cluster]
+  if( matrix-test-valid-patch (x    )(y + 1) )[set cluster lput (list (x    )(y + 1)) cluster]
+  if( matrix-test-valid-patch (x + 1)(y + 1) )[set cluster lput (list (x + 1)(y + 1)) cluster]
 end
 
 to color-map
