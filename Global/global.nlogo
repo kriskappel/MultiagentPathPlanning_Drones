@@ -63,6 +63,7 @@ turtles-own[
   own-matrix
   map-list
   timestamps
+  guided
   ;already-sync
 ]
 
@@ -141,6 +142,8 @@ to setup-patches
   set set_clusters[]
   set watershed_patches []
 
+  set map-matrix []
+
 end
 
 to setup-ants
@@ -175,15 +178,15 @@ to setup-ants
       set own-matrix lput temporary-list own-matrix
     ]
 
-    repeat 4
+    repeat 4 ;change for number-of-turtles for other numbers
     [
       set map-list lput matrix:from-row-list auxmap map-list
       set timestamps lput 0 timestamps
     ]
 
     set own-matrix matrix:from-row-list own-matrix
-
     ;matrix:set own-matrix 0 0 matrix:get own-matrix 0 0 + 1;colocando ++ na primeira posição
+    set guided false
 
     ask patch-here[
        ;set u-value u-value + 1
@@ -258,6 +261,8 @@ to go
        let flagsync 0
        ;let newMatrix []
        ;let flag 0;flag para saber se foi sincronizado ou nao
+
+       let aux-guided guided
        ask other turtles-on patches in-radius 3
        [
            ;print (word "sync")
@@ -273,6 +278,12 @@ to go
            ;set neighborTimes lput item who ticks neighborTimes
            set neighborTimes replace-item who neighborTimes ticks
            set flagsync 1
+
+           if(aux-guided = false) or (guided = false)
+           [
+             set map-matrix test
+             wathershed-start
+           ]
 
        ]
        if (flagsync = 1)
@@ -332,17 +343,10 @@ to go
        ]
      ]
 
-     mean-the-map
-     ask patches
-     [
-       if(u-value < mean-map and not member? (patch pxcor pycor) cluster) [ ;print "oi"
-         wathershed pxcor pycor
 
 
-         ;stop
-       ]
-     ]
-
+     set map-matrix []
+     ask formigas [ set guided false ]
 
      tick
 
@@ -817,6 +821,16 @@ to matrix-spread [x y]
   if( matrix-test-valid-patch (x - 1)(y + 1) )[set cluster lput (list (x - 1)(y + 1)) cluster]
   if( matrix-test-valid-patch (x    )(y + 1) )[set cluster lput (list (x    )(y + 1)) cluster]
   if( matrix-test-valid-patch (x + 1)(y + 1) )[set cluster lput (list (x + 1)(y + 1)) cluster]
+end
+
+to wathershed-start
+  mean-the-map
+   ask patches
+   [
+     if(u-value < mean-map and not member? (patch pxcor pycor) cluster) [ ;print "oi"
+       wathershed pxcor pycor
+     ]
+   ]
 end
 
 to color-map
