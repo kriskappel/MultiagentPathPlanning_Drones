@@ -49,6 +49,7 @@ globals[
    ;tempQMI
    cluster
    set_clusters
+
    watershed_patches
    ws-count
 
@@ -284,6 +285,7 @@ to go
              set map-matrix test
              wathershed-start
            ]
+           ;escolher quem mandar por distancia euclidiana
 
        ]
        if (flagsync = 1)
@@ -697,7 +699,7 @@ to wathershed [x y]
 
 end
 
-to matrix-wathersed [x y]
+to matrix-wathershed [x y]
 ;  let coordinates []
 ;  set coordinates lput x coordinates
 ;  set coordinates lput y coordinates
@@ -718,7 +720,7 @@ to matrix-wathersed [x y]
     while [i < length cluster]
     [
       let selected-patch item i cluster
-      spread item 0 selected-patch item 1 selected-patch
+      matrix-spread item 0 selected-patch item 1 selected-patch
       set i i + 1
     ]
   ]
@@ -825,11 +827,11 @@ end
 
 to wathershed-start
   mean-the-map
-   ask patches
+   ask patches with [pxcor > -1]
    [
-     if(u-value < mean-map and not member? (patch pxcor pycor) cluster) [ ;print "oi"
-       wathershed pxcor pycor
-     ]
+     if (test-valid-patch (pxcor)  (pycor));print "oi"
+     [ matrix-wathershed pxcor pycor ]
+
    ]
 end
 
