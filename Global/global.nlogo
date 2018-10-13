@@ -669,194 +669,114 @@ to print-matrix [matrix]
 end
 
 
-to wathershed [x y]
-  let i 0
-  let flag_valid false
-  if test-valid-patch x y
-  [
-    set cluster lput (patch x y ) cluster
-    spread x y
-    set flag_valid true
-  ]
-  set i i + 1
-
-
-
-  if(flag_valid)
-  [
-    while [i < length cluster]
-    [
-      let selected-patch item i cluster
-      spread [pxcor] of selected-patch [pycor] of selected-patch
-      set i i + 1
-    ]
-  ]
-  if(not empty? cluster)
-  [set set_clusters lput cluster set_clusters
-   set cluster []
-   color-map]
-
-
-end
-
-to matrix-wathershed [x y]
-;  let coordinates []
-;  set coordinates lput x coordinates
-;  set coordinates lput y coordinates
-
-  let i 0
-  let flag_valid false
-  if matrix-test-valid-patch x y
-  [
-   set cluster lput (list x y) cluster
-   matrix-spread x y
-   set flag_valid true
-  ]
-  set i i + 1
-
-
-  if(flag_valid)
-  [
-    while [i < length cluster]
-    [
-      let selected-patch item i cluster
-      matrix-spread item 0 selected-patch item 1 selected-patch
-      set i i + 1
-    ]
-  ]
-  if(not empty? cluster)
-  [
-    set set_clusters lput cluster set_clusters
-    set cluster []
-  ]
-end
-
-
-to-report test-valid-patch [x y]
-  ;print patch x y
-  if (patch x y) != nobody
-  [
-
-    if (not (member? (patch x y)  cluster) and not (member? (patch x y) set_clusters)) and ([u-value] of (patch x y) < mean-map)
-    [
-      let i 0
-      let flag_return true
-
-      while [i < length set_clusters]
-      [
-        let aux_cluster item i set_clusters
-
-        set i i + 1
-        if( (member? (patch x y) aux_cluster) )
-        [
-          set flag_return false
-        ]
-      ]
-
-      report flag_return
-    ]
-
-  ]
-  report false
-
-end
-
-to-report matrix-test-valid-patch [x y]
-  if (patch x y) != nobody
-  [
-
-    if (matrix:get map-matrix x y < mean-map)
-    [
-      if (not (member? (list x y) cluster))
-      [
-
-        let i 0
-        let flag_return true
-
-        while [i < length set_clusters]
-        [
-          let aux_cluster item i set_clusters
-
-          set i i + 1
-          if( (member? (list x y) aux_cluster) )
-          [
-            set flag_return false
-          ]
-        ]
-
-        report flag_return
-      ]
-    ]
-
-  ]
-  report false
-end
-
-to spread [x y]
-  ;while[length cluster > ws-count]
-  ;[
-   ; let selected-patch item ws-count cluster
-  if( test-valid-patch (x - 1)(y - 1) )[set cluster lput patch(x - 1)(y - 1) cluster]
-  if( test-valid-patch (x    )(y - 1) )[set cluster lput patch(x    )(y - 1) cluster]
-  if( test-valid-patch (x + 1)(y - 1) )[set cluster lput patch(x + 1)(y - 1) cluster]
-
-  if( test-valid-patch (x - 1)(y    ) )[set cluster lput patch(x - 1)(y    ) cluster]
-  if( test-valid-patch (x + 1)(y    ) )[set cluster lput patch(x + 1)(y    ) cluster]
-
-
-  if( test-valid-patch (x - 1)(y + 1) )[set cluster lput patch(x - 1)(y + 1) cluster]
-  if( test-valid-patch (x    )(y + 1) )[set cluster lput patch(x    )(y + 1) cluster]
-  if( test-valid-patch (x + 1)(y + 1) )[set cluster lput patch(x + 1)(y + 1) cluster]
-  ;]
-
-end
-
-to matrix-spread [x y]
-  if( matrix-test-valid-patch (x - 1)(y - 1) )[set cluster lput (list (x - 1)(y - 1)) cluster]
-  if( matrix-test-valid-patch (x    )(y - 1) )[set cluster lput (list (x    )(y - 1)) cluster]
-  if( matrix-test-valid-patch (x + 1)(y - 1) )[set cluster lput (list (x + 1)(y - 1)) cluster]
-
-  if( matrix-test-valid-patch (x - 1)(y    ) )[set cluster lput (list (x - 1)(y    )) cluster]
-  if( matrix-test-valid-patch (x + 1)(y    ) )[set cluster lput (list (x + 1)(y    )) cluster]
-
-
-  if( matrix-test-valid-patch (x - 1)(y + 1) )[set cluster lput (list (x - 1)(y + 1)) cluster]
-  if( matrix-test-valid-patch (x    )(y + 1) )[set cluster lput (list (x    )(y + 1)) cluster]
-  if( matrix-test-valid-patch (x + 1)(y + 1) )[set cluster lput (list (x + 1)(y + 1)) cluster]
-end
-
-to wathershed-start
-  mean-the-map
-   ask patches with [pxcor > -1]
-   [
-     if (test-valid-patch (pxcor)  (pycor));print "oi"
-     [ matrix-wathershed pxcor pycor ]
-
-   ]
-end
-
-to color-map
-  let i 0
-  let j 0
-  while[(j < length set_clusters)]
-  [
-    while [(i < length item j set_clusters)]
-    [
-      let list-to-color item j set_clusters
-      let patch-to-color item i list-to-color
-      ask patch-to-color[
-        set color-set color-set + 1
-        set pcolor color-set
-      ]
-      set i i + 1
-    ]
-    set j j + 1
-  ]
-  ;set ws-count 0
-  ;if not empty? cluster
-  ;[set set_clusters lput cluster set_clusters]
-  ;set cluster []
-end
+;to wathershed [x y]
+;  let i 0
+;  let flag_valid false
+;  if test-valid-patch x y
+;  [
+;    set cluster lput (patch x y ) cluster
+;    spread x y
+;    set flag_valid true
+;  ]
+;  set i i + 1
+;
+;
+;
+;  if(flag_valid)
+;  [
+;    while [i < length cluster]
+;    [
+;      let selected-patch item i cluster
+;      spread [pxcor] of selected-patch [pycor] of selected-patch
+;      set i i + 1
+;    ]
+;  ]
+;  if(not empty? cluster)
+;  [set set_clusters lput cluster set_clusters
+;   set cluster []
+;   color-map]
+;
+;
+;end
+;
+;
+;
+;
+;to-report test-valid-patch [x y]
+;  ;print patch x y
+;  if (patch x y) != nobody
+;  [
+;
+;    if (not (member? (patch x y)  cluster) and not (member? (patch x y) set_clusters)) and ([u-value] of (patch x y) < mean-map)
+;    [
+;      let i 0
+;      let flag_return true
+;
+;      while [i < length set_clusters]
+;      [
+;        let aux_cluster item i set_clusters
+;
+;        set i i + 1
+;        if( (member? (patch x y) aux_cluster) )
+;        [
+;          set flag_return false
+;        ]
+;      ]
+;
+;      report flag_return
+;    ]
+;
+;  ]
+;  report false
+;
+;end
+;
+;
+;to spread [x y]
+;  ;while[length cluster > ws-count]
+;  ;[
+;   ; let selected-patch item ws-count cluster
+;  if( test-valid-patch (x - 1)(y - 1) )[set cluster lput patch(x - 1)(y - 1) cluster]
+;  if( test-valid-patch (x    )(y - 1) )[set cluster lput patch(x    )(y - 1) cluster]
+;  if( test-valid-patch (x + 1)(y - 1) )[set cluster lput patch(x + 1)(y - 1) cluster]
+;
+;  if( test-valid-patch (x - 1)(y    ) )[set cluster lput patch(x - 1)(y    ) cluster]
+;  if( test-valid-patch (x + 1)(y    ) )[set cluster lput patch(x + 1)(y    ) cluster]
+;
+;
+;  if( test-valid-patch (x - 1)(y + 1) )[set cluster lput patch(x - 1)(y + 1) cluster]
+;  if( test-valid-patch (x    )(y + 1) )[set cluster lput patch(x    )(y + 1) cluster]
+;  if( test-valid-patch (x + 1)(y + 1) )[set cluster lput patch(x + 1)(y + 1) cluster]
+;  ;]
+;
+;end
+;
+;
+;
+;
+;
+;to color-map
+;  let i 0
+;  let j 0
+;  while[(j < length set_clusters)]
+;  [
+;    while [(i < length item j set_clusters)]
+;    [
+;      let list-to-color item j set_clusters
+;      let patch-to-color item i list-to-color
+;      ask patch-to-color[
+;        set color-set color-set + 1
+;        set pcolor color-set
+;      ]
+;      set i i + 1
+;    ]
+;    set j j + 1
+;  ]
+;  ;set ws-count 0
+;  ;if not empty? cluster
+;  ;[set set_clusters lput cluster set_clusters]
+;  ;set cluster []
+;end
 
 ;
 ;to floodfill [x y]
@@ -910,18 +830,131 @@ end
 ;  ]
 ;end
 
+to test-color
+  ask patches
+  [set pcolor 1]
+end
+
+
+;;mean of the map
 to mean-the-map
   ;let min-value min [u-value] of patches
   ;let max-value max [u-value] of patches
   ;let diff floor ((max-value - min-value) / 3)
   ;set mean-map diff
-  set mean-map floor mean [u-value] of patches
+  let list-of-means []
+  let i 0
+  let row-numbers item 0 matrix:dimensions map-matrix
+  let map-matrix-list matrix:to-row-list map-matrix
+
+  while [i < row-numbers]
+  [set list-of-means lput (floor mean item i map-matrix-list) list-of-means
+  set i i + 1]
+
+  set mean-map floor mean list-of-means
+  ;[set mean-map floor mean matrix:to-row-list map-matrix]
 end
 
-to test-color
-  ask patches
-  [set pcolor 1]
+
+
+
+
+;;first func to be called
+to wathershed-start
+  mean-the-map
+   ask patches with [pxcor > -1]
+   [
+     if (matrix-test-valid-patch (pxcor)  (pycor));print "oi"
+     [ matrix-wathershed pxcor pycor ]
+
+   ]
 end
+
+;;list and cluster control
+to matrix-wathershed [x y]
+;  let coordinates []
+;  set coordinates lput x coordinates
+;  set coordinates lput y coordinates
+
+  let i 0
+  let flag_valid false
+  if matrix-test-valid-patch x y
+  [
+   set cluster lput (list x y) cluster
+   matrix-spread x y
+   set flag_valid true
+  ]
+  set i i + 1
+
+
+  if(flag_valid)
+  [
+    while [i < length cluster]
+    [
+      let selected-patch item i cluster
+      matrix-spread item 0 selected-patch item 1 selected-patch
+      set i i + 1
+    ]
+  ]
+  if(not empty? cluster)
+  [
+    set set_clusters lput cluster set_clusters
+    set cluster []
+  ]
+end
+
+
+
+;;testing valid patches
+to-report matrix-test-valid-patch [x y]
+  if (patch x y) != nobody
+  [
+
+    if (matrix:get map-matrix x y < mean-map)
+    [
+      if (not (member? (list x y) cluster))
+      [
+
+        let i 0
+        let flag_return true
+
+        while [i < length set_clusters]
+        [
+          let aux_cluster item i set_clusters
+
+          set i i + 1
+          if( (member? (list x y) aux_cluster) )
+          [
+            set flag_return false
+          ]
+        ]
+
+        report flag_return
+      ]
+    ]
+
+  ]
+  report false
+end
+
+
+
+;;recursion part
+to matrix-spread [x y]
+  if( matrix-test-valid-patch (x - 1)(y - 1) )[set cluster lput (list (x - 1)(y - 1)) cluster]
+  if( matrix-test-valid-patch (x    )(y - 1) )[set cluster lput (list (x    )(y - 1)) cluster]
+  if( matrix-test-valid-patch (x + 1)(y - 1) )[set cluster lput (list (x + 1)(y - 1)) cluster]
+
+  if( matrix-test-valid-patch (x - 1)(y    ) )[set cluster lput (list (x - 1)(y    )) cluster]
+  if( matrix-test-valid-patch (x + 1)(y    ) )[set cluster lput (list (x + 1)(y    )) cluster]
+
+
+  if( matrix-test-valid-patch (x - 1)(y + 1) )[set cluster lput (list (x - 1)(y + 1)) cluster]
+  if( matrix-test-valid-patch (x    )(y + 1) )[set cluster lput (list (x    )(y + 1)) cluster]
+  if( matrix-test-valid-patch (x + 1)(y + 1) )[set cluster lput (list (x + 1)(y + 1)) cluster]
+end
+
+
 @#$#@#$#@
 GRAPHICS-WINDOW
 465
