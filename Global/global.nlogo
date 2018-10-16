@@ -64,7 +64,9 @@ turtles-own[
   own-matrix
   map-list
   timestamps
+
   guided
+  destiny
   ;already-sync
 ]
 
@@ -253,8 +255,14 @@ to go
          ]
 
          ;anda pro menor
-         face neighborMin
-         move-to neighborMin
+         ;;TODO descomentar as duas linhas pra ele se mover
+         ;face neighborMin
+         ;move-to neighborMin
+
+         ifelse (ticks = 1)
+         [move-to patch 15 15
+          face patch 12 18]
+         [move-to patch-ahead 1]
        ]
 
        let neighborMaps map-list
@@ -954,7 +962,6 @@ to matrix-spread [x y]
   if( matrix-test-valid-patch (x + 1)(y + 1) )[set cluster lput (list (x + 1)(y + 1)) cluster]
 end
 
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 465
@@ -1026,7 +1033,7 @@ number-of-ants
 number-of-ants
 1
 5
-4
+1
 1
 1
 NIL
