@@ -49,12 +49,14 @@ globals[
    ;tempQMI
    cluster
    set_clusters
+   cluster-values
 
    watershed_patches
    ws-count
 
    mean-map
    map-matrix
+
 ]
 
 turtles-own[
@@ -67,6 +69,7 @@ turtles-own[
 
   guided
   destiny
+  turn-guided
   ;already-sync
 ]
 
@@ -144,6 +147,7 @@ to setup-patches
   set cluster []
   set set_clusters[]
   set watershed_patches []
+  set cluster-values[]
 
   set map-matrix []
 
@@ -199,7 +203,13 @@ to setup-ants
     ]
 
     set number-of-fires 0
+
+    set destiny patch 12 18
+    set turn-guided false
+    set guided true
   ]
+
+
 end
 
 ;; Libera novos drones a cada intervalo de tempo especifico
@@ -256,13 +266,32 @@ to go
 
          ;anda pro menor
          ;;TODO descomentar as duas linhas pra ele se mover
-         ;face neighborMin
-         ;move-to neighborMin
+         face neighborMin
+         move-to neighborMin
 
-         ifelse (ticks = 1)
-         [move-to patch 15 15
-          face patch 12 18]
-         [move-to patch-ahead 1]
+        ;;GUIDED PART
+;         ifelse (ticks = 1)
+;
+;         [move-to patch 15 15]
+;         [
+;           if(guided = true)
+;           [
+;             ifelse(turn-guided = false)
+;             ;
+;             [
+;               print "aqui4"
+;               face patch [pxcor] of patch-here [pycor] of destiny
+;               move-to patch-ahead 1
+;               if(patch-here = patch [pxcor] of patch-here [pycor] of destiny) [print "aqui" set turn-guided true]
+;             ]
+;
+;             [
+;               face patch [pxcor] of destiny [pycor] of patch-here
+;               move-to patch-ahead 1
+;               if(patch-here = patch [pxcor] of destiny [pycor] of patch-here) [print "aqu2i" set turn-guided false set guided false]
+;             ]
+;           ]
+;         ]
        ]
 
        let neighborMaps map-list
@@ -356,7 +385,7 @@ to go
 
 
      set map-matrix []
-     ask formigas [ set guided false ]
+     ;ask formigas [ set guided false ]
 
      tick
 
@@ -962,6 +991,9 @@ to matrix-spread [x y]
   if( matrix-test-valid-patch (x + 1)(y + 1) )[set cluster lput (list (x + 1)(y + 1)) cluster]
 end
 
+to clusterize [x y]
+  set cluster lput (list x y) cluster
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 465
