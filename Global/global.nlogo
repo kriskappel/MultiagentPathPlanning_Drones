@@ -993,6 +993,13 @@ end
 
 to clusterize [x y]
   set cluster lput (list x y) cluster
+  ifelse(length (cluster-values) = length set_clusters)
+  [
+    set cluster-values lput (matrix:get map-matrix x y) cluster-values
+  ]
+  [
+    set cluster-values replace-item (length (cluster-values) - 1) (cluster-values) (last cluster-values)
+  ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
