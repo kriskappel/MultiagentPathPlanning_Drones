@@ -204,9 +204,9 @@ to setup-ants
 
     set number-of-fires 0
 
-    set destiny patch 12 18
+    set destiny 0
     set turn-guided false
-    set guided true
+    set guided false
   ]
 
 
@@ -317,8 +317,9 @@ to go
            set neighborTimes replace-item who neighborTimes ticks
            set flagsync 1
 
-           if(aux-guided = false) or (guided = false)
+           if(aux-guided = false) and (guided = false)
            [
+             ;print "wathershed call"
              set map-matrix test
              wathershed-start
            ]
@@ -385,6 +386,8 @@ to go
 
 
      set map-matrix []
+     set set_clusters []
+     set cluster-values []
      ;ask formigas [ set guided false ]
 
      tick
@@ -879,16 +882,21 @@ to mean-the-map
   ;let max-value max [u-value] of patches
   ;let diff floor ((max-value - min-value) / 3)
   ;set mean-map diff
+  ;print "mean"
   let list-of-means []
   let i 0
   let row-numbers item 0 matrix:dimensions map-matrix
+  ;print row-numbers
   let map-matrix-list matrix:to-row-list map-matrix
 
   while [i < row-numbers]
-  [set list-of-means lput (floor mean item i map-matrix-list) list-of-means
+  [set list-of-means lput (mean item i map-matrix-list) list-of-means
+   ; print list-of-means
   set i i + 1]
 
   set mean-map floor mean list-of-means
+  if(mean-map != 0)
+  [print mean-map]
   ;[set mean-map floor mean matrix:to-row-list map-matrix]
 end
 
@@ -898,6 +906,7 @@ end
 
 ;;first func to be called
 to wathershed-start
+  ;print "wathershed"
   mean-the-map
    ask patches with [pxcor > -1]
    [
@@ -946,9 +955,10 @@ end
 to-report matrix-test-valid-patch [x y]
   if (patch x y) != nobody
   [
-
+    ;print "test"
     if (matrix:get map-matrix x y < mean-map)
     [
+
       if (not (member? (list x y) cluster))
       [
 
@@ -967,6 +977,7 @@ to-report matrix-test-valid-patch [x y]
         ]
 
         report flag_return
+
       ]
     ]
 
@@ -978,17 +989,24 @@ end
 
 ;;recursion part
 to matrix-spread [x y]
-  if( matrix-test-valid-patch (x - 1)(y - 1) )[set cluster lput (list (x - 1)(y - 1)) cluster]
-  if( matrix-test-valid-patch (x    )(y - 1) )[set cluster lput (list (x    )(y - 1)) cluster]
-  if( matrix-test-valid-patch (x + 1)(y - 1) )[set cluster lput (list (x + 1)(y - 1)) cluster]
+  if( matrix-test-valid-patch (x - 1)(y - 1) );[set cluster lput (list (x - 1)(y - 1)) cluster]
+  [clusterize (x - 1)(y - 1)]
+  if( matrix-test-valid-patch (x    )(y - 1) );[set cluster lput (list (x    )(y - 1)) cluster]
+  [clusterize (x    )(y - 1)]
+  if( matrix-test-valid-patch (x + 1)(y - 1) );[set cluster lput (list (x + 1)(y - 1)) cluster]
+  [clusterize (x + 1)(y - 1)]
 
-  if( matrix-test-valid-patch (x - 1)(y    ) )[set cluster lput (list (x - 1)(y    )) cluster]
-  if( matrix-test-valid-patch (x + 1)(y    ) )[set cluster lput (list (x + 1)(y    )) cluster]
+  if( matrix-test-valid-patch (x - 1)(y    ) );[set cluster lput (list (x - 1)(y    )) cluster]
+  [clusterize (x - 1)(y    )]
+  if( matrix-test-valid-patch (x + 1)(y    ) );[set cluster lput (list (x + 1)(y    )) cluster]
+  [clusterize (x + 1)(y    )]
 
-
-  if( matrix-test-valid-patch (x - 1)(y + 1) )[set cluster lput (list (x - 1)(y + 1)) cluster]
-  if( matrix-test-valid-patch (x    )(y + 1) )[set cluster lput (list (x    )(y + 1)) cluster]
-  if( matrix-test-valid-patch (x + 1)(y + 1) )[set cluster lput (list (x + 1)(y + 1)) cluster]
+  if( matrix-test-valid-patch (x - 1)(y + 1) );[set cluster lput (list (x - 1)(y + 1)) cluster]
+  [clusterize (x - 1)(y + 1)]
+  if( matrix-test-valid-patch (x    )(y + 1) );[set cluster lput (list (x    )(y + 1)) cluster]
+  [clusterize (x    )(y + 1)]
+  if( matrix-test-valid-patch (x + 1)(y + 1) );[set cluster lput (list (x + 1)(y + 1)) cluster]
+  [clusterize (x + 1)(y + 1)]
 end
 
 to clusterize [x y]
@@ -998,7 +1016,10 @@ to clusterize [x y]
     set cluster-values lput (matrix:get map-matrix x y) cluster-values
   ]
   [
+    print cluster-values
+    print set_clusters
     set cluster-values replace-item (length (cluster-values) - 1) (cluster-values) (last cluster-values)
+
   ]
 end
 @#$#@#$#@
@@ -1072,7 +1093,7 @@ number-of-ants
 number-of-ants
 1
 5
-1
+4
 1
 1
 NIL
