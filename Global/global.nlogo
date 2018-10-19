@@ -322,7 +322,11 @@ to go
              ;print "wathershed call"
              set map-matrix test
              wathershed-start
+             ;print set_clusters
            ]
+           set map-matrix []
+           set set_clusters []
+           set cluster-values []
            ;escolher quem mandar por distancia euclidiana
 
        ]
@@ -385,9 +389,7 @@ to go
 
 
 
-     set map-matrix []
-     set set_clusters []
-     set cluster-values []
+
      ;ask formigas [ set guided false ]
 
      tick
@@ -895,8 +897,8 @@ to mean-the-map
   set i i + 1]
 
   set mean-map floor mean list-of-means
-  if(mean-map != 0)
-  [print mean-map]
+  ;if(mean-map != 0)
+  ;[print mean-map]
   ;[set mean-map floor mean matrix:to-row-list map-matrix]
 end
 
@@ -1016,8 +1018,8 @@ to clusterize [x y]
     set cluster-values lput (matrix:get map-matrix x y) cluster-values
   ]
   [
-    print cluster-values
-    print set_clusters
+    ;print cluster-values
+    ;print set_clusters
     set cluster-values replace-item (length (cluster-values) - 1) (cluster-values) (last cluster-values)
 
   ]
