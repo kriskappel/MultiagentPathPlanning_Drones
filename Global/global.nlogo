@@ -928,7 +928,8 @@ to matrix-wathershed [x y]
   let flag_valid false
   if matrix-test-valid-patch x y
   [
-   set cluster lput (list x y) cluster
+   ;set cluster lput (list x y) cluster
+   clusterize x y
    matrix-spread x y
    set flag_valid true
   ]
@@ -1013,8 +1014,11 @@ end
 
 to clusterize [x y]
   set cluster lput (list x y) cluster
-  ifelse(length (cluster-values) = length set_clusters)
+
+  ;print "clusterize"
+  ifelse(length cluster-values = length set_clusters)
   [
+   ; print set_clusters
     set cluster-values lput (matrix:get map-matrix x y) cluster-values
   ]
   [
