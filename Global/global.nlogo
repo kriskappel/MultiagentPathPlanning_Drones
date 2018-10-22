@@ -242,32 +242,58 @@ to go
        set map-list replace-item who map-list own-matrix
        set timestamps replace-item who timestamps ticks
 
-       let neighborMin min-of-4-matrix map-list timestamps ;retorna o patch com menor valor da vizinhança
+       let neighborMin 0
 
-       if(neighborMin != patch-here)
+       ifelse(not guided)
        [
+         set neighborMin min-of-4-matrix map-list timestamps ;retorna o patch com menor valor da vizinhança
 
-         ifelse ( neighborMin = patch-ahead 1) or (front-steps = 0)
-         [;se o menor for o logo a frente ele só soma 1 na variavel de passos a frente pro histograma de curvas
-           set front-steps front-steps + 1
-         ]
-         [;caso contrario se for um dos lados ele marca turn-side + 1
-          ; se for o logo atras ele marca turn-back + 1
+         if(neighborMin != patch-here)
+         [
 
-           add1-curve-list
-           ifelse ( neighborMin = patch-left-and-ahead 90 1 or neighborMin = patch-left-and-ahead -90 1)
-           [set turn-side turn-side + 1]
-
-           [if(neighborMin = patch-ahead -1)
-             [set turn-back turn-back + 1]
-
+           ifelse ( neighborMin = patch-ahead 1) or (front-steps = 0)
+           [;se o menor for o logo a frente ele só soma 1 na variavel de passos a frente pro histograma de curvas
+             set front-steps front-steps + 1
            ]
+           [;caso contrario se for um dos lados ele marca turn-side + 1
+            ; se for o logo atras ele marca turn-back + 1
+
+             add1-curve-list
+             ifelse ( neighborMin = patch-left-and-ahead 90 1 or neighborMin = patch-left-and-ahead -90 1)
+             [set turn-side turn-side + 1]
+
+             [if(neighborMin = patch-ahead -1)
+               [set turn-back turn-back + 1]
+
+             ]
+           ]
+
+           ;anda pro menor
+           ;;TODO descomentar as duas linhas pra ele se mover
+           face neighborMin
+           move-to neighborMin
+         ]
+       ]
+
+       [
+         set neighborMin patch-here
+         ifelse(turn-guided = false)
+         [
+           face patch [pxcor] of patch-here [pycor] of destiny
+           if(patch-ahead 1  != nobody and not any? turtles-on patch-ahead 1)
+           [set neighborMin patch-ahead 1]
+           if(patch-here = patch [pxcor] of patch-here [pycor] of destiny) [set turn-guided true]
+         ]
+         [
+           face patch [pxcor] of destiny [pycor] of patch-here
+           if(patch-ahead 1  != nobody and not any? turtles-on patch-ahead 1)
+           [set neighborMin patch-ahead 1]
+           if(patch-here = patch [pxcor] of destiny [pycor] of patch-here) [set turn-guided false set guided false]
          ]
 
-         ;anda pro menor
-         ;;TODO descomentar as duas linhas pra ele se mover
-         face neighborMin
          move-to neighborMin
+       ]
+         ;set neighborMin
 
         ;;GUIDED PART
 ;         ifelse (ticks = 1)
@@ -292,7 +318,8 @@ to go
 ;             ]
 ;           ]
 ;         ]
-       ]
+
+
 
        let neighborMaps map-list
        let neighborTimes timestamps
@@ -322,11 +349,24 @@ to go
              ;print "wathershed call"
              set map-matrix test
              wathershed-start
+             if(length set_clusters > 0)
+             [
+               let cluster_pos position (max cluster-values) cluster-values
+               set destiny first (item cluster_pos set_clusters)
+               set destiny patch (item 0 destiny)(item 1 destiny)
+               set guided true
+               set turn-guided false
+               ;print destiny
+
+               set map-matrix []
+               set set_clusters []
+               set cluster-values []
+               stop
+             ]
              ;print set_clusters
            ]
-           set map-matrix []
-           set set_clusters []
-           set cluster-values []
+
+
            ;escolher quem mandar por distancia euclidiana
 
        ]
@@ -375,7 +415,7 @@ to go
          ;adiciona um no vetor de checked. Por exemplo, se a turtle anda pra um patch e atualiza a posição pra 5, na posição 4 ele soma + 1
        ]
 
-       print-matrix own-matrix
+       ;print-matrix own-matrix
      ]
      percentage-calculator ;atualiza o vetor de percentage, que é o vetor de porcentagem de coberturas com relação ao vetor checked
      if(ticks = 4999 or ticks = 9999 or ticks =  14999 or ticks = 19999)[
