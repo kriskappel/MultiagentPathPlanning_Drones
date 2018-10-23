@@ -328,6 +328,7 @@ to go
        ;let flag 0;flag para saber se foi sincronizado ou nao
 
        let aux-guided guided
+
        ask other turtles-on patches in-radius 3
        [
            ;print (word "sync")
