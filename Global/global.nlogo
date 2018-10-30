@@ -57,6 +57,8 @@ globals[
    mean-map
    map-matrix
 
+   debug-cluster
+
 ]
 
 turtles-own[
@@ -150,6 +152,8 @@ to setup-patches
   set cluster-values[]
 
   set map-matrix []
+
+  set debug-cluster []
 
 end
 
@@ -366,9 +370,11 @@ to go
                print mean-map
                print cluster-values
 
+               set debug-cluster set_clusters
                set map-matrix []
                set set_clusters []
                set cluster-values []
+
                stop
              ]
              ;print set_clusters
