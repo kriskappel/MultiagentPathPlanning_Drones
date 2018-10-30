@@ -262,7 +262,7 @@ to go
            [;caso contrario se for um dos lados ele marca turn-side + 1
             ; se for o logo atras ele marca turn-back + 1
 
-             add1-curve-list
+             ;add1-curve-list
              ifelse ( neighborMin = patch-left-and-ahead 90 1 or neighborMin = patch-left-and-ahead -90 1)
              [set turn-side turn-side + 1]
 
@@ -287,7 +287,7 @@ to go
            if(patch-ahead 1  != nobody and not any? turtles-on patch-ahead 1)
            [set neighborMin patch-ahead 1
              move-to neighborMin]
-           if(patch-here = patch [pxcor] of patch-here [pycor] of destiny) [set turn-guided true]
+           if(patch-here = patch [pxcor] of patch-here [pycor] of destiny) [set turn-guided true set turn-side turn-side + 1]
          ]
          [
            face patch [pxcor] of destiny [pycor] of patch-here
@@ -364,11 +364,11 @@ to go
                set guided true
                set turn-guided false
 
-               print destiny
+               ;print destiny
 
-               print matrix:pretty-print-text map-matrix
-               print mean-map
-               print cluster-values
+               ;print matrix:pretty-print-text map-matrix
+               ;print mean-map
+               ;print cluster-values
 
                set debug-cluster set_clusters
                set map-matrix []
@@ -1087,10 +1087,10 @@ to clusterize [x y]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-465
+200
 10
-925
-491
+960
+791
 -1
 -1
 15.0
@@ -1104,9 +1104,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-29
+49
 0
-29
+49
 0
 0
 1
@@ -1171,7 +1171,7 @@ time-between-ants
 time-between-ants
 1
 2000
-50
+1
 1
 1
 NIL
@@ -1641,7 +1641,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="LRTA* 10k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="global10k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 10000</exitCondition>
