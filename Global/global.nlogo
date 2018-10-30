@@ -281,17 +281,19 @@ to go
          [
            face patch [pxcor] of patch-here [pycor] of destiny
            if(patch-ahead 1  != nobody and not any? turtles-on patch-ahead 1)
-           [set neighborMin patch-ahead 1]
+           [set neighborMin patch-ahead 1
+             move-to neighborMin]
            if(patch-here = patch [pxcor] of patch-here [pycor] of destiny) [set turn-guided true]
          ]
          [
            face patch [pxcor] of destiny [pycor] of patch-here
            if(patch-ahead 1  != nobody and not any? turtles-on patch-ahead 1)
-           [set neighborMin patch-ahead 1]
+           [set neighborMin patch-ahead 1
+             move-to neighborMin]
            if(patch-here = patch [pxcor] of destiny [pycor] of patch-here) [set turn-guided false set guided false]
          ]
 
-         move-to neighborMin
+         ;move-to neighborMin
        ]
          ;set neighborMin
 
@@ -357,7 +359,12 @@ to go
                set destiny patch (item 0 destiny)(item 1 destiny)
                set guided true
                set turn-guided false
-               ;print destiny
+
+               print destiny
+
+               print matrix:pretty-print-text map-matrix
+               print mean-map
+               print cluster-values
 
                set map-matrix []
                set set_clusters []
@@ -957,6 +964,7 @@ to wathershed-start
      [ matrix-wathershed pxcor pycor ]
 
    ]
+
 end
 
 ;;list and cluster control
@@ -1060,12 +1068,14 @@ to clusterize [x y]
   ifelse(length cluster-values = length set_clusters)
   [
    ; print set_clusters
-    set cluster-values lput (matrix:get map-matrix x y) cluster-values
+    set cluster-values lput ((matrix:get map-matrix x y) + 1) cluster-values
   ]
   [
     ;print cluster-values
     ;print set_clusters
-    set cluster-values replace-item (length (cluster-values) - 1) (cluster-values) (last cluster-values)
+    let parcial_sum (last cluster-values) + (matrix:get map-matrix x y)
+    set parcial_sum parcial_sum + 1
+    set cluster-values replace-item (length (cluster-values) - 1) (cluster-values) (parcial_sum)
 
   ]
 end
