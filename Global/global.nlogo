@@ -73,6 +73,8 @@ turtles-own[
   destiny
   turn-guided
   ;already-sync
+
+  guided-unlock
 ]
 
 patches-own[
@@ -211,6 +213,8 @@ to setup-ants
     set destiny 0
     set turn-guided false
     set guided false
+
+    set guided-unlock 0
   ]
 
 
@@ -248,7 +252,15 @@ to go
 
        let neighborMin 0
 
-       ifelse(not guided)
+       let flag_lock false
+
+       if (guided-unlock != 0)
+       [ifelse(ticks - guided-unlock <= 3)
+         [set flag_lock true]
+         [set guided-unlock 0]
+       ]
+
+       ifelse(not guided) or (flag_lock)
        [
          set neighborMin min-of-4-matrix map-list timestamps ;retorna o patch com menor valor da vizinhança
 
@@ -281,6 +293,7 @@ to go
 
        [
          set neighborMin patch-here
+
          ifelse(turn-guided = false)
          [
            face patch [pxcor] of patch-here [pycor] of destiny
