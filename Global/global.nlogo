@@ -254,6 +254,19 @@ to go
 
        let flag_lock false
 
+       let first-turtle who
+       if(patch-ahead 1 != nobody)
+       [
+         ask (turtles-on patch-ahead 1)
+         [
+           if (patch-ahead 1 != nobody)
+           [
+             if(member? first-turtle [who] of turtles-on patch-ahead 1)
+             [set guided-unlock ticks]
+           ]
+         ]
+       ]
+
        if (guided-unlock != 0)
        [ifelse(ticks - guided-unlock <= 3)
          [set flag_lock true]
