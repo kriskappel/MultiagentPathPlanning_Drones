@@ -982,40 +982,14 @@ to mean-the-map
   ;[set mean-map floor mean matrix:to-row-list map-matrix]
 end
 
-to mean-the-map-30percent
-  ;let min-value min [u-value] of patches
-  ;let max-value max [u-value] of patches
-  ;let diff floor ((max-value - min-value) / 3)
-  ;set mean-map diff
-  ;print "mean"
-  let list-of-means []
-  let max-u 0
-  let min-u 9999
-  let i 0
-  let row-numbers item 0 matrix:dimensions map-matrix
-  ;print row-numbers
-  let map-matrix-list matrix:to-row-list map-matrix
 
-  while [i < row-numbers]
-  [
-    if(max item i map-matrix-list > max-u) [set max-u max item i map-matrix-list]
-    if(min item i map-matrix-list > min-u) [set min-u min item i map-matrix-list]
-
-    set i i + 1
-  ]
-
-  set mean-map floor ((max-u - min-u) / 0.3)
-  ;if(mean-map != 0)
-  ;[print mean-map]
-  ;[set mean-map floor mean matrix:to-row-list map-matrix]
-end
 
 
 
 ;;first func to be called
 to wathershed-start
   ;print "wathershed"
-  mean-the-map-30percent
+  mean-the-map
    ask patches with [pxcor > -1]
    [
      if (matrix-test-valid-patch (pxcor)  (pycor));print "oi"
@@ -1126,14 +1100,14 @@ to clusterize [x y]
   ifelse(length cluster-values = length set_clusters)
   [
    ; print set_clusters
-    set cluster-values lput ((matrix:get map-matrix x y) + 1) cluster-values
+    set cluster-values lput (1) cluster-values
   ]
   [
     ;print cluster-values
     ;print set_clusters
-    let parcial_sum (last cluster-values) + (matrix:get map-matrix x y)
-    set parcial_sum parcial_sum + 1
-    set cluster-values replace-item (length (cluster-values) - 1) (cluster-values) (parcial_sum)
+    ;let parcial_sum (last cluster-values) + (matrix:get map-matrix x y)
+    ;set parcial_sum parcial_sum + 1
+    set cluster-values replace-item (length (cluster-values) - 1) (cluster-values) ((last cluster-values) + 1)
 
   ]
 end
@@ -1768,22 +1742,6 @@ NetLogo 5.3.1
     <metric>turn-back</metric>
     <enumeratedValueSet variable="number-of-ants">
       <value value="2"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="time-between-ants">
-      <value value="1"/>
-    </enumeratedValueSet>
-  </experiment>
-  <experiment name="global10k-30percent" repetitions="30" runMetricsEveryStep="false">
-    <setup>setup</setup>
-    <go>go</go>
-    <exitCondition>ticks &gt;= 10000</exitCondition>
-    <metric>qmi</metric>
-    <metric>sdf</metric>
-    <metric>number-of-coverages</metric>
-    <metric>turn-side</metric>
-    <metric>turn-back</metric>
-    <enumeratedValueSet variable="number-of-ants">
-      <value value="4"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="time-between-ants">
       <value value="1"/>
