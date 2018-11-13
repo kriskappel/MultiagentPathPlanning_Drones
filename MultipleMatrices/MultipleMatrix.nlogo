@@ -703,7 +703,7 @@ number-of-ants
 number-of-ants
 1
 5
-4
+2
 1
 1
 NIL
@@ -1247,6 +1247,22 @@ NetLogo 5.3.1
     <metric>turn-back</metric>
     <enumeratedValueSet variable="number-of-ants">
       <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="time-between-ants">
+      <value value="1"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="MM10k-2ants" repetitions="30" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <exitCondition>ticks &gt;= 10000</exitCondition>
+    <metric>qmi</metric>
+    <metric>sdf</metric>
+    <metric>number-of-coverages</metric>
+    <metric>turn-side</metric>
+    <metric>turn-back</metric>
+    <enumeratedValueSet variable="number-of-ants">
+      <value value="2"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="time-between-ants">
       <value value="1"/>

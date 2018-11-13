@@ -1004,7 +1004,7 @@ to mean-the-map-30percent
     set i i + 1
   ]
 
-  set mean-map floor ((max-u - min-u) / 0.3)
+  set mean-map floor (min-u + ((max-u - min-u) / 0.7))
   ;if(mean-map != 0)
   ;[print mean-map]
   ;[set mean-map floor mean matrix:to-row-list map-matrix]
@@ -1773,7 +1773,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="global10k-30percent" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="global10k-70percent" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 10000</exitCondition>
