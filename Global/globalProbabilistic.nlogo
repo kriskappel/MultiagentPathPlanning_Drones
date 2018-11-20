@@ -59,6 +59,8 @@ globals[
 
    debug-cluster
 
+   probabilistic_cluster
+
 ]
 
 turtles-own[
@@ -156,6 +158,7 @@ to setup-patches
   set map-matrix []
 
   set debug-cluster []
+  set probabilistic_cluster []
 
 end
 
@@ -377,44 +380,46 @@ to go
            set neighborTimes replace-item who neighborTimes ticks
            set flagsync 1
 
-           if(aux-guided = false) and (guided = false)
-           [
-             ;print "wathershed call"
-             ;set map-matrix test
-             wathershed-start
-             if(length set_clusters > 0)
-             [
-               let cluster_pos position (max cluster-values) cluster-values
-               set destiny first (item cluster_pos set_clusters)
-               set destiny patch (item 0 destiny)(item 1 destiny)
-               set guided true
-               set turn-guided false
-
-               ;print destiny
-
-               ;print matrix:pretty-print-text map-matrix
-               ;print mean-map
-               ;print cluster-values
-
-               set debug-cluster set_clusters
-               set map-matrix []
-               set set_clusters []
-               set cluster-values []
-
-               stop
-             ]
-             ;print set_clusters
-           ]
 
 
-           ;escolher quem mandar por distancia euclidiana
+
 
        ]
+
        if (flagsync = 1)
        [set map-list neighborMaps
        set timestamps neighborTimes]
 
+       if( (guided = false) and ((ticks mod 100) = 0))
+       [
+         ;print "wathershed call"
+         set map-matrix own-matrix
+         wathershed-start
+         if(length set_clusters > 0)
+         [
 
+           let rand_pos random length probabilistic_cluster
+           let cluster_pos item rand_pos probabilistic_cluster
+           set destiny first (item cluster_pos set_clusters)
+           set destiny patch (item 0 destiny)(item 1 destiny)
+           set guided true
+           set turn-guided false
+
+           ;print destiny
+
+           ;print matrix:pretty-print-text map-matrix
+           ;print mean-map
+           ;print cluster-values
+
+           set debug-cluster set_clusters
+           set map-matrix []
+           set set_clusters []
+           set cluster-values []
+           set probabilistic_cluster []
+           stop
+         ]
+         ;print set_clusters
+       ]
 ;       if (flag = 1)
 ;       [set own-matrix newMatrix];seta o valor da matrix no agente inicial, caso tenha algum agente na volta em que o valor tambem foi alterado
 
@@ -685,20 +690,11 @@ to-report min-of-4-matrix [matrixes times]
         set possible-patches lput patch-ahead -1 possible-patches
       ]
 
-    ]
-
-    set map-matrix item 0 matrixes
-    let i 1
-    repeat (count formigas - 1)
-    [
-      set map-matrix matrix:plus map-matrix (item i matrixes)
-      set i i + 1
-    ]
+     ]
 
     ifelse empty? possible-patches
     [report patch-here]
     [report item 0 possible-patches]
-
 
     ;let menor item 0 possible-patches
 
@@ -1031,7 +1027,7 @@ to wathershed-start
      [ matrix-wathershed pxcor pycor ]
 
    ]
-
+   choose-cluster
 end
 
 ;;list and cluster control
@@ -1146,12 +1142,28 @@ to clusterize [x y]
 
   ]
 end
+
+to choose-cluster
+
+  let number_of_clusters length set_clusters
+  let i 0
+  while [ i < number_of_clusters]
+  [
+    let aux length item i set_clusters
+    set aux (floor (aux / 10)) + 1
+    let j 0
+    while [j < aux]
+    [set probabilistic_cluster lput i probabilistic_cluster set j j + 1]
+    set i i + 1
+  ]
+  ;print probabilistic_cluster
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 200
 10
-660
-491
+960
+791
 -1
 -1
 15.0
@@ -1165,9 +1177,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-29
+49
 0
-29
+49
 0
 0
 1
@@ -1702,7 +1714,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="global10k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="globalProbabilistic10k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 10000</exitCondition>
