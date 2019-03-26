@@ -54,6 +54,8 @@ turtles-own[
   personal-curve-list
   own-matrix
   ;already-sync
+
+  time-matrix
 ]
 
 patches-own[
@@ -137,6 +139,8 @@ to setup-ants
     let j 0
     set own-matrix []
 
+    set time-matrix []
+
     ;inicializando matriz de memoria de cada agente
     repeat max-pxcor + 1
     [
@@ -148,8 +152,12 @@ to setup-ants
       ]
 
       set own-matrix lput temporary-list own-matrix
+
+      set time-matrix lput temporary-list time-matrix
     ]
     set own-matrix matrix:from-row-list own-matrix
+
+    set time-matrix matrix:from-row-list time-matrix
 
     ;matrix:set own-matrix 0 0 matrix:get own-matrix 0 0 + 1;colocando ++ na primeira posição
 
@@ -179,6 +187,8 @@ to go
        ;adiciona +1 na posição para qual a turtle foi
 
        matrix:set own-matrix ([pycor] of patch-here) ([pxcor] of patch-here) (matrix:get own-matrix ([pycor] of patch-here) ([pxcor] of patch-here)) + 1
+
+       matrix:set time-matrix ([pycor] of patch-here) ([pxcor] of patch-here) (ticks)
 
        ask patch-here[
          set u-value u-value + 1;atualiza o u-value
@@ -217,6 +227,8 @@ to go
        let firstMatrix own-matrix ;copia a matriz de memoria para uma matriz auxiliar no caso de achar
                                   ;uma outra turtle e precisar atualizar
 
+       let firstTimeMatrix time-matrix
+
        let newMatrix []
        let flag 0;flag para saber se foi sincronizado ou nao
        ask other turtles-on patches in-radius 3
@@ -226,6 +238,8 @@ to go
            let otherMatrix matrix:times newMatrix 1
            set flag 1
            set own-matrix otherMatrix
+
+           set time-matrix sync-timeMatrix time-matrix firstTimeMatrix
        ]
        if (flag = 1)
        [set own-matrix newMatrix];seta o valor da matrix no agente inicial, caso tenha algum agente na volta em que o valor tambem foi alterado
@@ -428,7 +442,20 @@ to-report min-of-4-matrix
       if matrix:get own-matrix ([pycor] of patch-left-and-ahead 90 1) ([pxcor] of patch-left-and-ahead 90 1) = matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
       [; e um deles for o menor e os dois forem iguais dai ele passa um random e retorna
         if matrix:get own-matrix ([pycor] of patch-left-and-ahead -90 1) ([pxcor] of patch-left-and-ahead -90 1) = matrix:get own-matrix ([pycor] of patch-left-and-ahead 90 1) ([pxcor] of patch-left-and-ahead 90 1)
-        [report item 0 shuffle sidelist]
+        [
+          if matrix:get time-matrix ([pycor] of patch-left-and-ahead -90 1) ([pxcor] of patch-left-and-ahead -90 1) < matrix:get time-matrix ([pycor] of patch-left-and-ahead 90 1) ([pxcor] of patch-left-and-ahead 90 1)
+          [
+            report patch-left-and-ahead -90 1
+          ]
+          if matrix:get time-matrix ([pycor] of patch-left-and-ahead 90 1) ([pxcor] of patch-left-and-ahead 90 1) < matrix:get time-matrix ([pycor] of patch-left-and-ahead -90 1) ([pxcor] of patch-left-and-ahead -90 1)
+          [
+            report patch-left-and-ahead 90 1
+          ]
+          if matrix:get time-matrix ([pycor] of patch-left-and-ahead -90 1) ([pxcor] of patch-left-and-ahead -90 1) = matrix:get time-matrix ([pycor] of patch-left-and-ahead 90 1) ([pxcor] of patch-left-and-ahead 90 1)
+          [
+            report item 0 shuffle sidelist
+          ]
+        ]
       ]
     ]
     if (member? patch-left-and-ahead 90 1 possible-patches)
@@ -461,6 +488,27 @@ to-report sync-matrix [matrix1 matrix2] ;sincroniza as duas matrizes passadas
       let media (matrix:get matrix3 i j)
       set media (round (media / 2)) ;faz a media de cada valor da lista
       matrix:set matrix3 i j media  ;e atribui na matriz q sera retornada
+
+      set j j + 1
+    ]
+    set i i + 1
+  ]
+
+  report matrix3
+end
+
+
+to-report sync-timeMatrix [matrix1 matrix2] ;sincroniza as duas matrizes passadas
+  let matrix3 (matrix:copy matrix1) ;matrix3 é a soma das matrizes 1 e 2
+
+  let i 0
+  let j 0
+  while [i < max-pycor + 1]
+  [
+    set j 0
+    while [j < max-pxcor + 1]
+    [
+      matrix:set matrix3 i j (max (list matrix:get matrix1 i j matrix:get matrix2 i j)) ;e atribui na matriz q sera retornada
 
       set j j + 1
     ]
