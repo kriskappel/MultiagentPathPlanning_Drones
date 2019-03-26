@@ -59,8 +59,6 @@ globals[
 
    debug-cluster
 
-   probabilistic_cluster
-
 ]
 
 turtles-own[
@@ -158,7 +156,6 @@ to setup-patches
   set map-matrix []
 
   set debug-cluster []
-  set probabilistic_cluster []
 
 end
 
@@ -380,46 +377,51 @@ to go
            set neighborTimes replace-item who neighborTimes ticks
            set flagsync 1
 
+           if(aux-guided = false) and (guided = false)
+           [
+             ;print "wathershed call"
+             ;set map-matrix test
+             sum_matrix map-list
+             wathershed-start
+             if(length set_clusters > 0)
+             [
+
+               ;let cluster_pos position (max cluster-values) cluster-values
+               let cluster_pos mean-and-mode
+               if(not empty? cluster_pos)
+               [
+                 set destiny cluster_pos
+                 set destiny patch (item 0 destiny)(item 1 destiny)
+                 set guided true
+                 set turn-guided false
+                 ;show mean-and-mode
+               ]
+                 ;print destiny
+
+                 ;print matrix:pretty-print-text map-matrix
+                 ;print mean-map
+                 ;print cluster-values
+
+               set debug-cluster set_clusters
+               set map-matrix []
+               set set_clusters []
+               set cluster-values []
 
 
+               stop
+             ]
+             ;print set_clusters
+           ]
 
+
+           ;escolher quem mandar por distancia euclidiana
 
        ]
-
        if (flagsync = 1)
        [set map-list neighborMaps
        set timestamps neighborTimes]
 
-       if( (guided = false) and ((ticks mod 100) = 0))
-       [
-         ;print "wathershed call"
-         set map-matrix own-matrix
-         wathershed-start
-         if(length set_clusters > 0)
-         [
 
-           let rand_pos random length probabilistic_cluster
-           let cluster_pos item rand_pos probabilistic_cluster
-           set destiny first (item cluster_pos set_clusters)
-           set destiny patch (item 0 destiny)(item 1 destiny)
-           set guided true
-           set turn-guided false
-
-           ;print destiny
-
-           ;print matrix:pretty-print-text map-matrix
-           ;print mean-map
-           ;print cluster-values
-
-           set debug-cluster set_clusters
-           set map-matrix []
-           set set_clusters []
-           set cluster-values []
-           set probabilistic_cluster []
-           stop
-         ]
-         ;print set_clusters
-       ]
 ;       if (flag = 1)
 ;       [set own-matrix newMatrix];seta o valor da matrix no agente inicial, caso tenha algum agente na volta em que o valor tambem foi alterado
 
@@ -690,11 +692,13 @@ to-report min-of-4-matrix [matrixes times]
         set possible-patches lput patch-ahead -1 possible-patches
       ]
 
-     ]
+    ]
+
 
     ifelse empty? possible-patches
     [report patch-here]
     [report item 0 possible-patches]
+
 
     ;let menor item 0 possible-patches
 
@@ -1027,7 +1031,7 @@ to wathershed-start
      [ matrix-wathershed pxcor pycor ]
 
    ]
-   choose-cluster
+
 end
 
 ;;list and cluster control
@@ -1131,44 +1135,63 @@ to clusterize [x y]
   ifelse(length cluster-values = length set_clusters)
   [
    ; print set_clusters
-    set cluster-values lput ((matrix:get map-matrix x y) + 1) cluster-values
+    let parcial_list []
+    set parcial_list lput (matrix:get map-matrix x y) parcial_list
+    set cluster-values lput parcial_list cluster-values
   ]
   [
     ;print cluster-values
     ;print set_clusters
-    let parcial_sum (last cluster-values) + (matrix:get map-matrix x y)
-    set parcial_sum parcial_sum + 1
-    set cluster-values replace-item (length (cluster-values) - 1) (cluster-values) (parcial_sum)
+    let parcial_list (last cluster-values) ;+ (matrix:get map-matrix x y)
+
+    set parcial_list lput (matrix:get map-matrix x y) parcial_list
+    set cluster-values replace-item (length (cluster-values) - 1) (cluster-values) (parcial_list)
 
   ]
 end
 
-to choose-cluster
-
-  let number_of_clusters length set_clusters
+to-report mean-and-mode
   let i 0
-  while [ i < number_of_clusters]
+  let win_mean 9999
+  let win_cluster []
+  repeat length set_clusters
   [
-    let aux length item i set_clusters
-    set aux (floor (aux / 10)) + 1
-    let j 0
-    while [j < aux]
-    [set probabilistic_cluster lput i probabilistic_cluster set j j + 1]
+    let analyzing item i cluster-values
+    let min_mode min (modes analyzing)
+    let mean_test mean (analyzing)
+    if( (mean_test < min_mode)  and (mean_test < win_mean))
+    [
+      set win_cluster first item i set_clusters
+      set win_mean  mean_test
+    ]
+  ]
+
+  ;if(not empty? win_cluster)
+  report win_cluster
+
+
+end
+
+to sum_matrix [matrixes]
+  set map-matrix item 0 matrixes
+  let i 1
+  repeat (count formigas - 1)
+  [
+    set map-matrix matrix:plus map-matrix (item i matrixes)
     set i i + 1
   ]
-  ;print probabilistic_cluster
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-45
+200
 10
-555
-541
+960
+791
 -1
 -1
-10.0
+15.0
 1
-8
+10
 1
 1
 1
@@ -1187,10 +1210,10 @@ ticks
 30.0
 
 BUTTON
-580
-10
-643
-43
+1035
+105
+1098
+138
 setup
 setup
 NIL
@@ -1204,10 +1227,10 @@ NIL
 1
 
 BUTTON
-660
-10
-722
-43
+1110
+105
+1172
+138
 NIL
 go
 T
@@ -1221,10 +1244,10 @@ NIL
 1
 
 SLIDER
-580
-60
-720
-93
+1181
+475
+1318
+508
 number-of-ants
 number-of-ants
 1
@@ -1236,10 +1259,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-580
-100
-720
-133
+1181
+515
+1321
+548
 time-between-ants
 time-between-ants
 1
@@ -1250,11 +1273,49 @@ time-between-ants
 NIL
 HORIZONTAL
 
+TEXTBOX
+1041
+240
+1191
+270
+The default file name will be NCResults.csv
+12
+0.0
+1
+
+BUTTON
+1046
+275
+1173
+308
+Change file name
+change-file
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
 MONITOR
-580
-200
-715
-245
+1041
+565
+1176
+610
+Cobertura (%)
+percentage
+17
+1
+11
+
+MONITOR
+1041
+615
+1176
+660
 Curvas de 90°
 turn-side
 17
@@ -1262,10 +1323,10 @@ turn-side
 11
 
 MONITOR
-580
-250
-715
-295
+1181
+615
+1316
+660
 Curvas de 180°
 turn-back
 17
@@ -1273,10 +1334,10 @@ turn-back
 11
 
 MONITOR
-655
-145
-712
-190
+1116
+515
+1173
+560
 QMI
 qmi
 17
@@ -1284,15 +1345,33 @@ qmi
 11
 
 MONITOR
-585
-145
-642
-190
+1046
+515
+1103
+560
 SDF
 sdf
 17
 1
 11
+
+PLOT
+1041
+320
+1316
+470
+Cobertura (%)
+Numero
+Porcentagem
+0.0
+25.0
+0.0
+100.0
+true
+false
+"set-plot-x-range 0 1\nset-plot-y-range 0 100" "ifelse(empty? checked)\n[set-plot-x-range 0 1\nset-histogram-num-bars 1]\n\n[set-plot-x-range 0 length checked\nset-histogram-num-bars length checked]\n\nhistogram percentage"
+PENS
+"default" 1.0 1 -14730904 true "histogram percentage" "histogram percentage"
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -1658,7 +1737,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="globalProbabilistic10k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="global10k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 10000</exitCondition>
@@ -1742,6 +1821,22 @@ NetLogo 5.3.1
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 10000</exitCondition>
+    <metric>qmi</metric>
+    <metric>sdf</metric>
+    <metric>number-of-coverages</metric>
+    <metric>turn-side</metric>
+    <metric>turn-back</metric>
+    <enumeratedValueSet variable="number-of-ants">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="time-between-ants">
+      <value value="1"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="global40k" repetitions="30" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <exitCondition>ticks &gt;= 40000</exitCondition>
     <metric>qmi</metric>
     <metric>sdf</metric>
     <metric>number-of-coverages</metric>

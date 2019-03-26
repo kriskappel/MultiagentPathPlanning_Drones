@@ -1150,8 +1150,8 @@ end
 GRAPHICS-WINDOW
 200
 10
-660
-491
+960
+791
 -1
 -1
 15.0
@@ -1165,9 +1165,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-29
+49
 0
-29
+49
 0
 0
 1
@@ -1786,6 +1786,22 @@ NetLogo 5.3.1
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 10000</exitCondition>
+    <metric>qmi</metric>
+    <metric>sdf</metric>
+    <metric>number-of-coverages</metric>
+    <metric>turn-side</metric>
+    <metric>turn-back</metric>
+    <enumeratedValueSet variable="number-of-ants">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="time-between-ants">
+      <value value="1"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="global40k" repetitions="30" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <exitCondition>ticks &gt;= 40000</exitCondition>
     <metric>qmi</metric>
     <metric>sdf</metric>
     <metric>number-of-coverages</metric>
