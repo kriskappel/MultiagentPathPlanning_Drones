@@ -236,13 +236,15 @@ to go
          move-to neighborMin
        ]
 
-       let neighborMaps map-list
-       let neighborTimes timestamps
-       let flagsync 0
-       ;let newMatrix []
-       ;let flag 0;flag para saber se foi sincronizado ou nao
-       ask other turtles-on patches in-radius 3
+       if(ticks != 0 and ticks mod 1000 = 0)
        [
+         let neighborMaps map-list
+         let neighborTimes timestamps
+         let flagsync 0
+         ;let newMatrix []
+         ;let flag 0;flag para saber se foi sincronizado ou nao
+         ask other turtles-on patches in-radius 3
+         [
            ;print (word "sync")
            ;print who
            ;set newMatrix sync-matrix own-matrix firstMatrix;passa a matriz das duas turtles para sincronizar
@@ -257,11 +259,11 @@ to go
            set neighborTimes replace-item who neighborTimes ticks
            set flagsync 1
 
+         ]
+         if (flagsync = 1)
+         [set map-list neighborMaps
+           set timestamps neighborTimes]
        ]
-       if (flagsync = 1)
-       [set map-list neighborMaps
-       set timestamps neighborTimes]
-
 
 ;       if (flag = 1)
 ;       [set own-matrix newMatrix];seta o valor da matrix no agente inicial, caso tenha algum agente na volta em que o valor tambem foi alterado
@@ -303,7 +305,7 @@ to go
          ;adiciona um no vetor de checked. Por exemplo, se a turtle anda pra um patch e atualiza a posição pra 5, na posição 4 ele soma + 1
        ]
 
-       print-matrix own-matrix
+       ;print-matrix own-matrix
      ]
      percentage-calculator ;atualiza o vetor de percentage, que é o vetor de porcentagem de coberturas com relação ao vetor checked
      if(ticks = 4999 or ticks = 9999 or ticks =  14999 or ticks = 19999)[
@@ -1188,7 +1190,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="LRTA* 10k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="multi_infrange10k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 10000</exitCondition>
@@ -1204,7 +1206,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="LRTA* 15k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="multi_infrange15k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 15000</exitCondition>
@@ -1220,7 +1222,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="LRTA* 20k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="multi_infrange20k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 20000</exitCondition>
