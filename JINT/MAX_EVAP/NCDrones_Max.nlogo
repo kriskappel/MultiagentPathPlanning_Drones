@@ -422,7 +422,7 @@ to-report min-of-4-matrix
 
 
     let menor item 0 possible-patches
-    let menorEvap (ticks - matrix:get time-matrix ([pycor] of menor) ([pxcor] of menor) ) / 1000
+    let menorEvap (ticks - matrix:get time-matrix ([pycor] of menor) ([pxcor] of menor) ) / 100
     let menorValue (matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)) - menorEvap
 
     ;acha o menor da lista
@@ -431,7 +431,7 @@ to-report min-of-4-matrix
     while [i < length possible-patches]
     [
       let current item i possible-patches
-      let currentEvap (ticks - matrix:get time-matrix ([pycor] of current) ([pxcor] of current) ) / 1000
+      let currentEvap (ticks - matrix:get time-matrix ([pycor] of current) ([pxcor] of current) ) / 100
       let currentValue (matrix:get own-matrix ([pycor] of current) ([pxcor] of current)) - currentEvap
 
       if currentValue < menorValue
@@ -1070,7 +1070,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="LRTA* 10k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="max_evap10k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 10000</exitCondition>
@@ -1102,7 +1102,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="LRTA* 20k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="max_evap20k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 20000</exitCondition>
