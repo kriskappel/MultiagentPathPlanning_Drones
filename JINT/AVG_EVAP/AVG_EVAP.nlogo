@@ -54,9 +54,9 @@ turtles-own[
   front-steps
   personal-curve-list
   own-matrix
-  map-list
-  timestamps
   ;already-sync
+
+  time-matrix
 ]
 
 patches-own[
@@ -138,33 +138,24 @@ to setup-ants
     let i 0
     let j 0
     set own-matrix []
-    set map-list []
-    let auxmap []
-    set timestamps[]
+
+    set time-matrix []
 
     ;inicializando matriz de memoria de cada agente
     repeat max-pxcor + 1
-    ;repeat 10
     [
       let temporary-list[]
       repeat max-pycor + 1
-      ;repeat 10
       [
         set temporary-list lput 0 temporary-list
 
       ]
 
-      set auxmap lput temporary-list auxmap
       set own-matrix lput temporary-list own-matrix
     ]
-
-    repeat 4
-    [
-      set map-list lput matrix:from-row-list auxmap map-list
-      set timestamps lput 0 timestamps
-    ]
-
     set own-matrix matrix:from-row-list own-matrix
+
+    set time-matrix matrix:copy own-matrix
 
     ;matrix:set own-matrix 0 0 matrix:get own-matrix 0 0 + 1;colocando ++ na primeira posição
 
@@ -184,7 +175,6 @@ to create-ants
   if(ticks mod time-between-ants = 0 and ticks > 1 and nb-ants-aux < (number-of-ants - 1))[
     set nb-ants-aux nb-ants-aux + 1
     setup-ants
-
   ]
 end
 
@@ -194,10 +184,11 @@ to go
      ask formigas [
        ;adiciona +1 na posição para qual a turtle foi
 
-       ;print (word "turtle")
-       ;print who
+       print (word "turtle")
+       print who
 
        matrix:set own-matrix ([pycor] of patch-here) ([pxcor] of patch-here) (matrix:get own-matrix ([pycor] of patch-here) ([pxcor] of patch-here)) + 1
+       matrix:set time-matrix ([pycor] of patch-here) ([pxcor] of patch-here) ticks
 
        let old-patch patch-here
 
@@ -206,10 +197,7 @@ to go
          set plabel u-value
        ]
 
-       set map-list replace-item who map-list own-matrix
-       set timestamps replace-item who timestamps ticks
-
-       let neighborMin min-of-4-matrix map-list timestamps ;retorna o patch com menor valor da vizinhança
+       let neighborMin min-of-4-matrix ;retorna o patch com menor valor da vizinhança
 
        if(neighborMin != patch-here)
        [
@@ -237,34 +225,34 @@ to go
        ]
 
 
-       let neighborMaps map-list
-       let neighborTimes timestamps
-       let flagsync 0
-       ;let newMatrix []
-       ;let flag 0;flag para saber se foi sincronizado ou nao
+       let firstMatrix own-matrix ;copia a matriz de memoria para uma matriz auxiliar no caso de achar
+                                  ;uma outra turtle e precisar atualizar
+
+       let fTimeMatrix matrix:copy time-matrix
+
+       let newMatrix []
+       let newTimeMatrix []
+
+       let flag 0;flag para saber se foi sincronizado ou nao
        ask other turtles-on patches in-radius 3
        [
-           ;print (word "sync")
-           ;print who
-           ;set newMatrix sync-matrix own-matrix firstMatrix;passa a matriz das duas turtles para sincronizar
-           ;set firstMatrix newMatrix
-           ;let otherMatrix matrix:times newMatrix 1
-           ;set flag 1
-           ;set own-matrix otherMatrix
-           ;
-           let test matrix:times own-matrix 1
-           set neighborMaps replace-item who neighborMaps test
-           ;set neighborTimes lput item who ticks neighborTimes
-           set neighborTimes replace-item who neighborTimes ticks
-           set flagsync 1
+           print (word "sync")
+           print who
+           set newMatrix sync-matrix own-matrix firstMatrix;passa a matriz das duas turtles para sincronizar
+           set firstMatrix newMatrix
+           let otherMatrix matrix:times newMatrix 1
+           set own-matrix otherMatrix
 
+           set flag 1
+
+           set newTimeMatrix sync-matrix time-matrix fTimeMatrix;passa a matriz das duas turtles para sincronizar
+           set fTimeMatrix newTimeMatrix
+           let oldTimeMatrix matrix:times newTimeMatrix 1
+           set time-matrix oldTimeMatrix
        ]
-       if (flagsync = 1)
-       [set map-list neighborMaps
-       set timestamps neighborTimes]
-
-;       if (flag = 1)
-;       [set own-matrix newMatrix];seta o valor da matrix no agente inicial, caso tenha algum agente na volta em que o valor tambem foi alterado
+       if (flag = 1)
+       [set own-matrix newMatrix
+         set time-matrix newTimeMatrix];seta o valor da matrix no agente inicial, caso tenha algum agente na volta em que o valor tambem foi alterado
 
        ask neighborMin[
 
@@ -412,217 +400,82 @@ to add1-curve-list
 
 end
 
-to-report min-of-4-matrix [matrixes times]
+to-report min-of-4-matrix
 
     let possible-patches []
-    let menor 99999
-    let flag 0
 
     ;primeiro testa todos os patches dos 4 vizinhos sao possiveis e se nao tem nenhuma turtle neles e poe os possiveis numa lista (possible-patches)
     if patch-ahead 1 != nobody and not any? turtles-on patch-ahead 1
-    [
-      let i 0
-      let result 0
-      repeat count formigas
-      [
-        if(item i times > 0)
-        [
-
-          let chances ceiling ((ticks - (item i times) ) / 50 )
-          if(chances = 0) [set chances 1]
-
-          if((random chances) = 0)
-          [
-            let auxmatrix item i matrixes
-            let uvalue matrix:get auxmatrix ([pycor] of patch-ahead 1) ([pxcor] of patch-ahead 1)
-            set result result + uvalue
-
-
-          ]
-
-          ;let partial uvalue * (ticks / (item i times))
-          set i i + 1
-        ]
-      ]
-      set possible-patches lput patch-ahead 1 possible-patches
-      set menor result
-    ]
-
-
+    [set possible-patches lput patch-ahead 1 possible-patches]
 
     if patch-left-and-ahead 90 1 != nobody and not any? turtles-on patch-left-and-ahead 90 1
-    [
-      let i 0
-      let result 0
-      repeat count formigas
-      [
-        if(item i times > 0)
-        [
-
-          let chances ceiling ((ticks - (item i times) ) / 50 )
-          if(chances = 0) [set chances 1]
-
-          if((random chances) = 0)
-          [
-            let auxmatrix item i matrixes
-            let uvalue matrix:get auxmatrix ([pycor] of patch-left-and-ahead 90 1) ([pxcor] of patch-left-and-ahead 90 1)
-            set result result + uvalue
-
-
-          ]
-
-          ;let partial uvalue * (ticks / (item i times))
-          set i i + 1
-        ]
-      ]
-
-      if(result < menor)
-      [
-        set flag 1
-        set menor result
-        set possible-patches []
-        set possible-patches lput patch-left-and-ahead 90 1 possible-patches
-      ]
-     ]
-
-
+    [set possible-patches lput patch-left-and-ahead 90 1 possible-patches]
 
     if patch-left-and-ahead -90 1 != nobody and not any? turtles-on patch-left-and-ahead -90 1
-    [
-      let i 0
-      let result 0
-      repeat count formigas
-      [
-
-        if(item i times > 0)
-        [
-
-          let chances ceiling ((ticks - (item i times) ) / 50 )
-          if(chances = 0) [set chances 1]
-
-          if((random chances) = 0)
-          [
-            let auxmatrix item i matrixes
-            let uvalue matrix:get auxmatrix ([pycor] of patch-left-and-ahead -90 1) ([pxcor] of patch-left-and-ahead -90 1)
-            set result result + uvalue
-
-
-          ]
-
-          ;let partial uvalue * (ticks / (item i times))
-          set i i + 1
-
-        ]
-      ]
-
-      if(result < menor)
-      [
-        set menor result
-        set possible-patches []
-        set possible-patches lput patch-left-and-ahead -90 1 possible-patches
-      ]
-      if(result = menor and flag = 1)
-      [
-        set possible-patches []
-        set possible-patches lput patch-left-and-ahead 90 1 possible-patches
-        set possible-patches lput patch-left-and-ahead -90 1 possible-patches
-        let randpatch item 0 shuffle possible-patches
-        set possible-patches []
-        set possible-patches lput randpatch possible-patches
-      ]
-     ]
-
+    [set possible-patches lput patch-left-and-ahead -90 1 possible-patches]
 
     if patch-ahead -1  != nobody and not any? turtles-on patch-ahead -1
-    [
-      let i 0
-      let result 0
-      repeat count formigas
-      [
+    [set possible-patches lput patch-ahead -1  possible-patches]
 
-        if(item i times > 0)
-        [
-
-          let chances ceiling ((ticks - (item i times) ) / 50 )
-          if(chances = 0) [set chances 1]
-
-          if((random chances) = 0)
-          [
-            let auxmatrix item i matrixes
-            let uvalue matrix:get auxmatrix ([pycor] of patch-ahead -1) ([pxcor] of patch-ahead -1)
-            set result result + uvalue
-
-
-          ]
-
-          ;let partial uvalue * (ticks / (item i times))
-          set i i + 1
-        ]
-      ]
-
-      if(result < menor)
-      [
-        set menor result
-        set possible-patches []
-        set possible-patches lput patch-ahead -1 possible-patches
-      ]
-
-     ]
-
-    ifelse empty? possible-patches
+    if empty? possible-patches
     [report patch-here]
-    [report item 0 possible-patches]
 
-    ;let menor item 0 possible-patches
+
+    let menor item 0 possible-patches
+    let menorEvap (ticks - matrix:get time-matrix ([pycor] of menor) ([pxcor] of menor) ) / 100
+    let menorValue (matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)) - menorEvap
 
     ;acha o menor da lista
 
-    ;let i 0
-    ;while [i < length possible-patches]
-    ;[
-      ;let current item i possible-patches
+    let i 0
+    while [i < length possible-patches]
+    [
+      let current item i possible-patches
+      let currentEvap (ticks - matrix:get time-matrix ([pycor] of current) ([pxcor] of current) ) / 100
+      let currentValue (matrix:get own-matrix ([pycor] of current) ([pxcor] of current)) - currentEvap
 
-      ;if matrix:get own-matrix ([pycor] of current) ([pxcor] of current) < matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
-      ;[
-      ;  set menor current
-      ;]
-     ; set i i + 1
-    ;]
+      if currentValue < menorValue
+      [
+        set menorValue currentValue
+        set menor current
+      ]
+      set i i + 1
+    ]
     ;no final do loop menor tem o valor do menor
 
-    ;if member? patch-ahead 1 possible-patches
-;    ;[; aqui se o menor for o logo a frente dai retorna ele, caso contrario continua a execução
-;      if matrix:get own-matrix ([pycor] of patch-ahead 1) ([pxcor] of patch-ahead 1) = matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
-;      [report patch-ahead 1];retorna o menor se ele for o logo a frente
-;    ]
-;
-;    let sidelist []
-;    set sidelist lput patch-left-and-ahead -90 1 sidelist
-;    set sidelist lput patch-left-and-ahead 90 1 sidelist
-;    ;guardou os dois dos lados no sidelist pra passar um random neles caso os dois dos lados estejam disponiveis
-;
-;    if (member? patch-left-and-ahead -90 1 possible-patches) and (member? patch-left-and-ahead 90 1 possible-patches)
-;    [; se os dois  forem possiveis
-;      if matrix:get own-matrix ([pycor] of patch-left-and-ahead 90 1) ([pxcor] of patch-left-and-ahead 90 1) = matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
-;      [; e um deles for o menor e os dois forem iguais dai ele passa um random e retorna
-;        if matrix:get own-matrix ([pycor] of patch-left-and-ahead -90 1) ([pxcor] of patch-left-and-ahead -90 1) = matrix:get own-matrix ([pycor] of patch-left-and-ahead 90 1) ([pxcor] of patch-left-and-ahead 90 1)
-;        [report item 0 shuffle sidelist]
-;      ]
-;    ]
-;    if (member? patch-left-and-ahead 90 1 possible-patches)
-;    [; caso nao caia na condição anterior ele testa só o de um lado
-;      if matrix:get own-matrix ([pycor] of patch-left-and-ahead 90 1) ([pxcor] of patch-left-and-ahead 90 1) = matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
-;      [report patch-left-and-ahead 90 1]
-;    ]
-;    if (member? patch-left-and-ahead -90 1 possible-patches)
-;    [; e depois testa do outro
-;      if matrix:get own-matrix ([pycor] of patch-left-and-ahead -90 1) ([pxcor] of patch-left-and-ahead -90 1) = matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
-;      [report patch-left-and-ahead -90 1]
-;    ]
-;
-;    ;por final se nao caiu em nenhuma das condições anteriores só resta testar o atras
-;    if member? patch-ahead -1 possible-patches
-;    [report patch-ahead -1]
+    if member? patch-ahead 1 possible-patches
+    [; aqui se o menor for o logo a frente dai retorna ele, caso contrario continua a execução
+      if matrix:get own-matrix ([pycor] of patch-ahead 1) ([pxcor] of patch-ahead 1) = matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
+      [report patch-ahead 1];retorna o menor se ele for o logo a frente
+    ]
+
+    let sidelist []
+    set sidelist lput patch-left-and-ahead -90 1 sidelist
+    set sidelist lput patch-left-and-ahead 90 1 sidelist
+    ;guardou os dois dos lados no sidelist pra passar um random neles caso os dois dos lados estejam disponiveis
+
+    if (member? patch-left-and-ahead -90 1 possible-patches) and (member? patch-left-and-ahead 90 1 possible-patches)
+    [; se os dois  forem possiveis
+      if matrix:get own-matrix ([pycor] of patch-left-and-ahead 90 1) ([pxcor] of patch-left-and-ahead 90 1) = matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
+      [; e um deles for o menor e os dois forem iguais dai ele passa um random e retorna
+        if matrix:get own-matrix ([pycor] of patch-left-and-ahead -90 1) ([pxcor] of patch-left-and-ahead -90 1) = matrix:get own-matrix ([pycor] of patch-left-and-ahead 90 1) ([pxcor] of patch-left-and-ahead 90 1)
+        [report item 0 shuffle sidelist]
+      ]
+    ]
+    if (member? patch-left-and-ahead 90 1 possible-patches)
+    [; caso nao caia na condição anterior ele testa só o de um lado
+      if matrix:get own-matrix ([pycor] of patch-left-and-ahead 90 1) ([pxcor] of patch-left-and-ahead 90 1) = matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
+      [report patch-left-and-ahead 90 1]
+    ]
+    if (member? patch-left-and-ahead -90 1 possible-patches)
+    [; e depois testa do outro
+      if matrix:get own-matrix ([pycor] of patch-left-and-ahead -90 1) ([pxcor] of patch-left-and-ahead -90 1) = matrix:get own-matrix ([pycor] of menor) ([pxcor] of menor)
+      [report patch-left-and-ahead -90 1]
+    ]
+
+    ;por final se nao caiu em nenhuma das condições anteriores só resta testar o atras
+    if member? patch-ahead -1 possible-patches
+    [report patch-ahead -1]
 
 end
 
@@ -636,8 +489,10 @@ to-report sync-matrix [matrix1 matrix2] ;sincroniza as duas matrizes passadas
     set j 0
     while [j < max-pxcor + 1]
     [
-      let value max (list (matrix:get matrix1 i j) (matrix:get matrix2 i j))
-      matrix:set matrix3 i j value  ;e atribui na matriz q sera retornada
+      let media (matrix:get matrix3 i j)
+      set media (round (media / 2)) ;faz a media de cada valor da lista
+      matrix:set matrix3 i j media  ;e atribui na matriz q sera retornada
+
       set j j + 1
     ]
     set i i + 1
@@ -663,13 +518,13 @@ to percentage-calculator
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-435
-40
-945
-571
+235
+10
+1015
+811
 -1
 -1
-10.0
+15.4
 1
 10
 1
@@ -1217,7 +1072,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="multiplematrix_TD10k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="avg_evap10k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 10000</exitCondition>
@@ -1233,7 +1088,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="multiplematrix_TD15k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="avg_evap15k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 15000</exitCondition>
@@ -1249,7 +1104,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="multiplematrix_TD20k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="avg_evap20k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 20000</exitCondition>
