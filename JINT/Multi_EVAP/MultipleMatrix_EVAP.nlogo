@@ -317,7 +317,7 @@ to go
          ;adiciona um no vetor de checked. Por exemplo, se a turtle anda pra um patch e atualiza a posição pra 5, na posição 4 ele soma + 1
        ]
 
-       print-matrix own-matrix
+       ;print-matrix own-matrix
      ]
      percentage-calculator ;atualiza o vetor de percentage, que é o vetor de porcentagem de coberturas com relação ao vetor checked
      if(ticks = 4999 or ticks = 9999 or ticks =  14999 or ticks = 19999)[
@@ -444,7 +444,7 @@ to-report min-of-4-matrix [matrixes times tick-maps]
       let result 0
       repeat count formigas
       [
-        if(ticks > 0)
+        if(ticks > 0 and item i tick-maps != 0)
         [
           let auxmatrix item i matrixes
           let uvalue matrix:get auxmatrix ([pycor] of patch-ahead 1) ([pxcor] of patch-ahead 1)
@@ -452,7 +452,7 @@ to-report min-of-4-matrix [matrixes times tick-maps]
           ;========TODO========
           ;REVER SE TA CERTO
           let evapMatrix item i tick-maps
-          let evapValue (ticks - matrix:get time-matrix ([pycor] of evapMatrix) ([pxcor] of evapMatrix) ) / 100
+          let evapValue (ticks - matrix:get evapMatrix ([pycor] of patch-ahead 1) ([pxcor] of patch-ahead 1) ) / 100
           set uvalue uvalue - evapValue
           ;let partial uvalue * ((item i times) / ticks)
           set result result + uvalue
@@ -471,11 +471,15 @@ to-report min-of-4-matrix [matrixes times tick-maps]
       let result 0
       repeat count formigas
       [
-        if(ticks > 0)
+        if(ticks > 0 and item i tick-maps != 0)
         [
           let auxmatrix item i matrixes
           let uvalue matrix:get auxmatrix ([pycor] of patch-left-and-ahead 90 1) ([pxcor] of patch-left-and-ahead 90 1)
          ;let partial uvalue * ((item i times) / ticks)
+          let evapMatrix item i tick-maps
+          let evapValue (ticks - matrix:get evapMatrix ([pycor] of patch-left-and-ahead 90 1) ([pxcor] of patch-left-and-ahead 90 1) ) / 100
+          set uvalue uvalue - evapValue
+          ;let partial uvalue * ((item i times) / ticks)
           set result result + uvalue
           set i i + 1
         ]
@@ -498,10 +502,14 @@ to-report min-of-4-matrix [matrixes times tick-maps]
       let result 0
       repeat count formigas
       [
-        if(ticks > 0)
+        if(ticks > 0 and item i tick-maps != 0)
         [
           let auxmatrix item i matrixes
           let uvalue matrix:get auxmatrix ([pycor] of patch-left-and-ahead -90 1) ([pxcor] of patch-left-and-ahead -90 1)
+          ;let partial uvalue * ((item i times) / ticks)
+          let evapMatrix item i tick-maps
+          let evapValue (ticks - matrix:get evapMatrix ([pycor] of patch-left-and-ahead -90 1) ([pxcor] of patch-left-and-ahead -90 1) ) / 100
+          set uvalue uvalue - evapValue
           ;let partial uvalue * ((item i times) / ticks)
           set result result + uvalue
           set i i + 1
@@ -544,10 +552,14 @@ to-report min-of-4-matrix [matrixes times tick-maps]
       repeat count formigas
       [
 
-        if(ticks > 0)
+        if(ticks > 0 and item i tick-maps != 0)
         [
           let auxmatrix item i matrixes
           let uvalue matrix:get auxmatrix ([pycor] of patch-ahead -1) ([pxcor] of patch-ahead -1)
+          ;let partial uvalue * ((item i times) / ticks)
+          let evapMatrix item i tick-maps
+          let evapValue (ticks - matrix:get evapMatrix ([pycor] of patch-ahead -1) ([pxcor] of patch-ahead -1) ) / 100
+          set uvalue uvalue - evapValue
           ;let partial uvalue * ((item i times) / ticks)
           set result result + uvalue
           set i i + 1
@@ -1266,7 +1278,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="LRTA* 10k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="multi_evap10k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 10000</exitCondition>
@@ -1282,7 +1294,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="LRTA* 15k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="multi_evap15k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 15000</exitCondition>
@@ -1298,7 +1310,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="LRTA* 20k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="multi_evap20k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 20000</exitCondition>
