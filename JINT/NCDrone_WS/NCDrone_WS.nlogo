@@ -1,5 +1,6 @@
 extensions [
   csv
+  matrix
 ]
 
 breed [formigas]
@@ -44,6 +45,18 @@ globals[
    number-of-coverages
 
    csv-curve-list
+
+   cluster
+   set_clusters
+   cluster-values
+
+   watershed_patches
+   ws-count
+
+   mean-map
+   map-matrix
+
+   debug-cluster
 ]
 
 turtles-own[
@@ -52,6 +65,13 @@ turtles-own[
   personal-curve-list
 
   already-sync
+
+
+  guided
+  destiny
+  turn-guided
+
+  guided-unlock
 ]
 
 patches-own[
@@ -105,6 +125,8 @@ to setup-patches
   let i 0
   let j 0
 
+  set mean-map 0
+
   repeat max-pxcor + 1 [
     set j 0
 
@@ -116,6 +138,16 @@ to setup-patches
     ]
     set i i + 1
   ]
+
+  set cluster []
+  set set_clusters[]
+  set watershed_patches []
+  set cluster-values[]
+
+  set map-matrix []
+
+  set debug-cluster []
+
 end
 
 to setup-ants
@@ -138,6 +170,12 @@ to setup-ants
     ]
 
     set number-of-fires 0
+
+    set destiny 0
+    set turn-guided false
+    set guided false
+
+    set guided-unlock 0
   ]
 end
 
@@ -168,6 +206,8 @@ to go
 
        face neighborMin
        move-to neighborMin
+
+
 
        ask neighborMin[
 
@@ -217,6 +257,34 @@ to go
          set number-of-coverages u-value
        ]
      ]
+
+     ;if(ticks mod 50 == 0)
+     set map-matrix []
+
+     let i 0
+     repeat max-pxcor + 1
+     ;repeat 10
+     [
+       let j 0
+       let temporary-list[]
+       repeat max-pycor + 1
+       ;repeat 10
+       [
+         set temporary-list lput [u-value] of patch j i temporary-list
+
+         set j j + 1
+       ]
+
+       set i i + 1
+       set map-matrix lput temporary-list map-matrix
+       print "oi"
+     ]
+
+     set map-matrix matrix:from-row-list map-matrix
+
+
+
+
      tick
 
 end
@@ -434,6 +502,161 @@ to-report min-of-4-neighbor
       report patch-ahead -1]
     [report patch-here]
 
+end
+
+;;###########==============WATERSHED================############
+
+
+
+;;mean of the map
+to mean-the-map
+  ;let min-value min [u-value] of patches
+  ;let max-value max [u-value] of patches
+  ;let diff floor ((max-value - min-value) / 3)
+  ;set mean-map diff
+  ;print "mean"
+  let list-of-means []
+  let i 0
+  let row-numbers item 0 matrix:dimensions map-matrix
+  ;print row-numbers
+  let map-matrix-list matrix:to-row-list map-matrix
+
+  while [i < row-numbers]
+  [set list-of-means lput (mean item i map-matrix-list) list-of-means
+   ; print list-of-means
+  set i i + 1]
+
+  set mean-map floor mean list-of-means
+  ;if(mean-map != 0)
+  ;[print mean-map]
+  ;[set mean-map floor mean matrix:to-row-list map-matrix]
+end
+
+
+;;first func to be called
+to wathershed-start
+  ;print "wathershed"
+  mean-the-map
+   ask patches with [pxcor > -1]
+   [
+     if (matrix-test-valid-patch (pxcor)  (pycor));print "oi"
+     [ matrix-wathershed pxcor pycor ]
+
+   ]
+
+end
+
+;;list and cluster control
+to matrix-wathershed [x y]
+;  let coordinates []
+;  set coordinates lput x coordinates
+;  set coordinates lput y coordinates
+
+  let i 0
+  let flag_valid false
+  if matrix-test-valid-patch x y
+  [
+   ;set cluster lput (list x y) cluster
+   clusterize x y
+   matrix-spread x y
+   set flag_valid true
+  ]
+  set i i + 1
+
+
+  if(flag_valid)
+  [
+    while [i < length cluster]
+    [
+      let selected-patch item i cluster
+      matrix-spread item 0 selected-patch item 1 selected-patch
+      set i i + 1
+    ]
+  ]
+  if(not empty? cluster)
+  [
+    set set_clusters lput cluster set_clusters
+    set cluster []
+  ]
+end
+
+
+
+;;testing valid patches
+to-report matrix-test-valid-patch [x y]
+  if (patch x y) != nobody
+  [
+    ;print "test"
+    if (matrix:get map-matrix x y < mean-map)
+    [
+
+      if (not (member? (list x y) cluster))
+      [
+
+        let i 0
+        let flag_return true
+
+        while [i < length set_clusters]
+        [
+          let aux_cluster item i set_clusters
+
+          set i i + 1
+          if( (member? (list x y) aux_cluster) )
+          [
+            set flag_return false
+          ]
+        ]
+
+        report flag_return
+
+      ]
+    ]
+
+  ]
+  report false
+end
+
+
+
+;;recursion part
+to matrix-spread [x y]
+  if( matrix-test-valid-patch (x - 1)(y - 1) );[set cluster lput (list (x - 1)(y - 1)) cluster]
+  [clusterize (x - 1)(y - 1)]
+  if( matrix-test-valid-patch (x    )(y - 1) );[set cluster lput (list (x    )(y - 1)) cluster]
+  [clusterize (x    )(y - 1)]
+  if( matrix-test-valid-patch (x + 1)(y - 1) );[set cluster lput (list (x + 1)(y - 1)) cluster]
+  [clusterize (x + 1)(y - 1)]
+
+  if( matrix-test-valid-patch (x - 1)(y    ) );[set cluster lput (list (x - 1)(y    )) cluster]
+  [clusterize (x - 1)(y    )]
+  if( matrix-test-valid-patch (x + 1)(y    ) );[set cluster lput (list (x + 1)(y    )) cluster]
+  [clusterize (x + 1)(y    )]
+
+  if( matrix-test-valid-patch (x - 1)(y + 1) );[set cluster lput (list (x - 1)(y + 1)) cluster]
+  [clusterize (x - 1)(y + 1)]
+  if( matrix-test-valid-patch (x    )(y + 1) );[set cluster lput (list (x    )(y + 1)) cluster]
+  [clusterize (x    )(y + 1)]
+  if( matrix-test-valid-patch (x + 1)(y + 1) );[set cluster lput (list (x + 1)(y + 1)) cluster]
+  [clusterize (x + 1)(y + 1)]
+end
+
+to clusterize [x y]
+  set cluster lput (list x y) cluster
+
+  ;print "clusterize"
+  ifelse(length cluster-values = length set_clusters)
+  [
+   ; print set_clusters
+    set cluster-values lput ((matrix:get map-matrix x y) + 1) cluster-values
+  ]
+  [
+    ;print cluster-values
+    ;print set_clusters
+    let parcial_sum (last cluster-values) + (matrix:get map-matrix x y)
+    set parcial_sum parcial_sum + 1
+    set cluster-values replace-item (length (cluster-values) - 1) (cluster-values) (parcial_sum)
+
+  ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
