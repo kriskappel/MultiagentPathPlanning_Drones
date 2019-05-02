@@ -57,6 +57,8 @@ globals[
    map-matrix
 
    debug-cluster
+
+   destiny
 ]
 
 turtles-own[
@@ -68,7 +70,7 @@ turtles-own[
 
 
   guided
-  destiny
+
   turn-guided
 
   guided-unlock
@@ -148,6 +150,8 @@ to setup-patches
 
   set debug-cluster []
 
+  set destiny 0
+
 end
 
 to setup-ants
@@ -171,7 +175,7 @@ to setup-ants
 
     set number-of-fires 0
 
-    set destiny 0
+
     set turn-guided false
     set guided false
 
@@ -277,11 +281,26 @@ to go
 
        set i i + 1
        set map-matrix lput temporary-list map-matrix
-       print "oi"
+
      ]
 
      set map-matrix matrix:from-row-list map-matrix
 
+     wathershed-start
+
+     if(length set_clusters > 0)
+     [
+       let cluster_pos position (max cluster-values) cluster-values
+       set destiny first (item cluster_pos set_clusters)
+       set destiny patch (item 0 destiny)(item 1 destiny)
+
+       let smallest_distance 99999
+       ask turtles [
+         let dist_to_dest sqrt( (([pxcor] of destiny - [pxcor] of patch-here) ^ 2) + (([pycor] of destiny - [pycor] of patch-here) ^ 2) )
+         if(dist_to_dest < smallest_distance) [set smallest_distance dist_to_dest]
+       ]
+
+     ]
 
 
 
