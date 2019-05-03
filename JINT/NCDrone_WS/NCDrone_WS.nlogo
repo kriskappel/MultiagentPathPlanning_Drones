@@ -50,15 +50,14 @@ globals[
    set_clusters
    cluster-values
 
-   watershed_patches
-   ws-count
-
    mean-map
    map-matrix
 
    debug-cluster
 
    destiny
+
+   watershed-lock
 ]
 
 turtles-own[
@@ -72,8 +71,6 @@ turtles-own[
   guided
 
   turn-guided
-
-  guided-unlock
 ]
 
 patches-own[
@@ -143,7 +140,7 @@ to setup-patches
 
   set cluster []
   set set_clusters[]
-  set watershed_patches []
+
   set cluster-values[]
 
   set map-matrix []
@@ -151,6 +148,8 @@ to setup-patches
   set debug-cluster []
 
   set destiny 0
+
+  set watershed-lock false
 
 end
 
@@ -179,7 +178,6 @@ to setup-ants
     set turn-guided false
     set guided false
 
-    set guided-unlock 0
   ]
 end
 
@@ -204,14 +202,44 @@ to go
          set plabel u-value
        ]
 
-       ifelse (neighborMin = patch-ahead 1) or (front-steps = 0)
-       [ set front-steps front-steps + 1 ]
-       [add1-curve-list]
 
-       face neighborMin
-       move-to neighborMin
+       ifelse(guided = true)
+       [
+
+         set neighborMin patch-here
+
+         ifelse(turn-guided = false)
+         [
+           face patch [pxcor] of patch-here [pycor] of destiny
+           if(patch-ahead 1  != nobody and not any? turtles-on patch-ahead 1)
+           [set neighborMin patch-ahead 1
+             move-to neighborMin]
+           if(patch-here = patch [pxcor] of patch-here [pycor] of destiny) [set turn-guided true set turn-side turn-side + 1]
+         ]
+         [
+           face patch [pxcor] of destiny [pycor] of patch-here
+           if(patch-ahead 1  != nobody and not any? turtles-on patch-ahead 1)
+           [set neighborMin patch-ahead 1
+             move-to neighborMin]
+           if(patch-here = patch [pxcor] of destiny [pycor] of patch-here)
+           [
+             set turn-guided false
+             set guided false
+             set watershed-lock false
+           ]
+         ]
 
 
+       ]
+       [
+
+;         if (neighborMin = patch-ahead 1) or (front-steps = 0)
+;         [ set front-steps front-steps + 1 ]
+;         ;[add1-curve-list]
+
+         face neighborMin
+         move-to neighborMin
+       ]
 
        ask neighborMin[
 
@@ -284,24 +312,33 @@ to go
 
      ]
 
-     set map-matrix matrix:from-row-list map-matrix
-
-     wathershed-start
-
-     if(length set_clusters > 0)
+     if (watershed-lock = false)
      [
-       let cluster_pos position (max cluster-values) cluster-values
-       set destiny first (item cluster_pos set_clusters)
-       set destiny patch (item 0 destiny)(item 1 destiny)
+       set map-matrix matrix:from-row-list map-matrix
 
-       let smallest_distance 99999
-       ask turtles [
-         let dist_to_dest sqrt( (([pxcor] of destiny - [pxcor] of patch-here) ^ 2) + (([pycor] of destiny - [pycor] of patch-here) ^ 2) )
-         if(dist_to_dest < smallest_distance) [set smallest_distance dist_to_dest]
+       wathershed-start
+
+       if(length set_clusters > 0)
+       [
+         let cluster_pos position (max cluster-values) cluster-values
+         set destiny first (item cluster_pos set_clusters)
+         set destiny patch (item 1 destiny)(item 0 destiny)
+
+         let smallest_distance 99999
+         let closest_turtle 0
+         ask turtles [
+           let dist_to_dest sqrt( (([pxcor] of destiny - [pxcor] of patch-here) ^ 2) + (([pycor] of destiny - [pycor] of patch-here) ^ 2) )
+           if(dist_to_dest < smallest_distance) [set smallest_distance dist_to_dest set closest_turtle who]
+         ]
+
+         ask turtle closest_turtle [set guided true set watershed-lock true]
+
        ]
-
+       set cluster-values []
+       set map-matrix []
+       set set_clusters []
+       set mean-map 0
      ]
-
 
 
      tick
@@ -1233,7 +1270,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="nc-evap10k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="nc-ws10k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 10000</exitCondition>
@@ -1249,7 +1286,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="nc-evap15k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="nc-ws15k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 15000</exitCondition>
@@ -1265,7 +1302,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="nc-evap20k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="nc-ws20k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 20000</exitCondition>

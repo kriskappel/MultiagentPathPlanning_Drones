@@ -264,7 +264,11 @@ to go
            set neighborTimes replace-item who neighborTimes ticks
            set flagsync 1
 
-           set neighborPos replace-item turtle_sync neighborPos patch-here
+           print turtle_sync
+           print who
+           print "====="
+
+           set neighborPos replace-item who neighborPos patch-here
 
        ]
        if (flagsync = 1)
@@ -313,7 +317,7 @@ to go
          ;adiciona um no vetor de checked. Por exemplo, se a turtle anda pra um patch e atualiza a posição pra 5, na posição 4 ele soma + 1
        ]
 
-       print-matrix own-matrix
+       ;print-matrix own-matrix
      ]
      percentage-calculator ;atualiza o vetor de percentage, que é o vetor de porcentagem de coberturas com relação ao vetor checked
      if(ticks = 4999 or ticks = 9999 or ticks =  14999 or ticks = 19999)[
