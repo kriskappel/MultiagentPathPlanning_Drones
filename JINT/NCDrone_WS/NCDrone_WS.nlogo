@@ -461,94 +461,53 @@ end
 to-report min-of-4-neighbor
 
     let possible-patches []
-    let evap-values []
-    let fator 1000
 
     ;primeiro testa todos os patches dos 4 vizinhos sao possiveis e se nao tem nenhuma turtle neles e poe os possiveis numa lista (possible-patches)
     if patch-ahead 1 != nobody
-    [set possible-patches lput patch-ahead 1 possible-patches
-     set evap-values lput ([u-value] of patch-ahead 1 - ((ticks -[visita-anterior] of patch-ahead 1) / fator ) ) evap-values]
+    [set possible-patches lput patch-ahead 1 possible-patches]
 
     if patch-left-and-ahead 90 1 != nobody
-    [set possible-patches lput patch-left-and-ahead 90 1 possible-patches
-     set evap-values lput ([u-value] of patch-left-and-ahead 90 1 - ((ticks -[visita-anterior] of patch-left-and-ahead 90 1) / fator ) ) evap-values]
+    [set possible-patches lput patch-left-and-ahead 90 1 possible-patches]
 
     if patch-left-and-ahead -90 1 != nobody
-    [set possible-patches lput patch-left-and-ahead -90 1 possible-patches
-     set evap-values lput ([u-value] of  patch-left-and-ahead -90 1 - ((ticks -[visita-anterior] of patch-left-and-ahead -90 1) / fator ) ) evap-values]
+    [set possible-patches lput patch-left-and-ahead -90 1 possible-patches]
 
     if patch-ahead -1  != nobody
-    [set possible-patches lput patch-ahead -1  possible-patches
-     set evap-values lput ([u-value] of patch-ahead -1 - ((ticks -[visita-anterior] of patch-ahead -1) / fator ) ) evap-values]
+    [set possible-patches lput patch-ahead -1  possible-patches]
 
-    let menor-uvalue min evap-values
-
-    let aux-list []
-    let i 0
-
-    repeat length evap-values
-    [
-      if(item i evap-values = menor-uvalue)
-      [
-        set aux-list lput item i possible-patches aux-list
-      ]
-
-      set i i + 1
-    ]
-
-    set possible-patches aux-list
-
-;    if(empty? evap-values)
-;    [report patch-here]
-;
-;    if(menor-uvalue = item 0 evap-values)
-;    [report item 0 possible-patches]
-;
-;    if(length evap-uvalues > 2)
-;    if(menor-uvalue = item 1 evap-values and menor-uvalue = item 2 evap-values)
-;    [report item 0 (shuffle (list (item 1 possible-patches) (item 2 possible-patches) ))]
-;
-;    if(menor-uvalue = item 1 evap-values)
-;    [report item 1 possible-patches]
-;
-;    if(menor-uvalue = item 2 evap-values)
-;    [report item 2 possible-patches]
-;
-;    if(menor-uvalue = item 3 evap-values)
-;    [report item 3 possible-patches]
-;
-
-
-
-    ;let menor [u-value] of min-one-of neighbors4 [u-value]
+    let menor [u-value] of min-one-of neighbors4 [u-value]
 
     if member? patch-ahead 1 possible-patches
     [; aqui se o menor for o logo a frente dai retorna ele, caso contrario continua a execução
-      ;if [u-value] of patch-ahead 1 = menor
-      report patch-ahead 1;retorna o menor se ele for o logo a frente
+      if [u-value] of patch-ahead 1 = menor
+      [report patch-ahead 1];retorna o menor se ele for o logo a frente
     ]
 
+    let sidelist []
+    set sidelist lput patch-left-and-ahead -90 1 sidelist
+    set sidelist lput patch-left-and-ahead 90 1 sidelist
+    ;guardou os dois dos lados no sidelist pra passar um random neles caso os dois dos lados estejam disponiveis
 
     if (member? patch-left-and-ahead -90 1 possible-patches) and (member? patch-left-and-ahead 90 1 possible-patches)
     [; se os dois  forem possiveis
-       let sidelist []
-       set sidelist lput patch-left-and-ahead -90 1 sidelist
-       set sidelist lput patch-left-and-ahead 90 1 sidelist
-
-       set turn-side turn-side + 1
-       ;guardou os dois dos lados no sidelist pra passar um random neles caso os dois dos lados estejam disponiveis
-       report item 0 shuffle sidelist
-
+      if( [u-value] of patch-left-and-ahead 90 1 = menor)
+      [
+        if( [u-value] of patch-left-and-ahead 90 -1 = menor)
+          [set turn-side turn-side + 1
+            report item 0 shuffle sidelist]
+      ]
     ]
     if (member? patch-left-and-ahead 90 1 possible-patches)
     [; caso nao caia na condição anterior ele testa só o de um lado
-      set turn-side turn-side + 1
-      report patch-left-and-ahead 90 1
+      if( [u-value] of patch-left-and-ahead 90 1 = menor)
+      [set turn-side turn-side + 1
+        report patch-left-and-ahead 90 1]
     ]
     if (member? patch-left-and-ahead -90 1 possible-patches)
     [; e depois testa do outro
-      set turn-side turn-side + 1
-      report patch-left-and-ahead -90 1
+      if( [u-value] of patch-left-and-ahead 90 -1 = menor)
+      [set turn-side turn-side + 1
+        report patch-left-and-ahead -90 1]
     ]
 
     ;por final se nao caiu em nenhuma das condições anteriores só resta testar o atras
