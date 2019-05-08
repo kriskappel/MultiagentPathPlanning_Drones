@@ -152,6 +152,8 @@ to setup-ants
     ]
     set own-matrix matrix:from-row-list own-matrix
 
+    set old-matrix matrix:copy own-matrix
+
     ;matrix:set own-matrix 0 0 matrix:get own-matrix 0 0 + 1;colocando ++ na primeira posição
 
     ask patch-here[
@@ -280,7 +282,15 @@ to go
 
      if(ticks = 100)
      [
+       let sum-matrix matrix:make-constant (max-pxcor + 1) (max-pycor + 1) 0
+       ask turtles [
+         set sum-matrix matrix:plus sum-matrix (matrix:minus own-matrix old-matrix)
+       ]
 
+       ask turtles[
+         set own-matrix sum-matrix
+         set old-matrix sum-matrix
+       ]
      ]
 
      tick
