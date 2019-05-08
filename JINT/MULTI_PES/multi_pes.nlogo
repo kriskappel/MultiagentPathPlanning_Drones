@@ -237,6 +237,13 @@ to go
          set i i + 1
        ]
 
+       if(who = 0)
+       [
+         print "=============="
+         print item 1 turtle_head
+         print item 1 turtle_pos
+       ]
+
        let neighborMin min-of-4-matrix map-list timestamps ;retorna o patch com menor valor da vizinhança
 
        if(neighborMin != patch-here)
@@ -734,7 +741,7 @@ to-report simulate_ants [matrix location orientation]
   [; aqui se o menor for o logo a frente dai retorna ele, caso contrario continua a execução
     if matrix:get uav-matrix ([pycor] of ahead) ([pxcor] of ahead) = matrix:get uav-matrix ([pycor] of menor) ([pxcor] of menor)
     [
-      matrix:set uav-matrix ([pycor] of ahead) ([pxcor] of ahead) ( matrix:get uav-matrix ([pycor] of ahead) ([pxcor] of ahead) + 1)
+      set uav-matrix matrix:set-and-report uav-matrix ([pycor] of ahead) ([pxcor] of ahead) ( matrix:get uav-matrix ([pycor] of ahead) ([pxcor] of ahead) + 1)
 
       report (list uav-matrix  ahead  uav-heading)
     ];retorna o menor se ele for o logo a frente
@@ -755,14 +762,14 @@ to-report simulate_ants [matrix location orientation]
 
         if rng = side90
         [
-          matrix:set uav-matrix ([pycor] of side90) ([pxcor] of side90) ( matrix:get uav-matrix ([pycor] of side90) ([pxcor] of side90) + 1)
+          set uav-matrix matrix:set-and-report uav-matrix ([pycor] of side90) ([pxcor] of side90) ( matrix:get uav-matrix ([pycor] of side90) ([pxcor] of side90) + 1)
 
           report (list uav-matrix side90 (uav-heading + 90))
         ]
 
         if rng = sideM90
         [
-          matrix:set uav-matrix ([pycor] of sideM90) ([pxcor] of sideM90) ( matrix:get uav-matrix ([pycor] of sideM90) ([pxcor] of sideM90) + 1)
+          set uav-matrix matrix:set-and-report uav-matrix ([pycor] of sideM90) ([pxcor] of sideM90) ( matrix:get uav-matrix ([pycor] of sideM90) ([pxcor] of sideM90) + 1)
 
           report (list uav-matrix sideM90 (uav-heading - 90))
         ]
@@ -775,7 +782,7 @@ to-report simulate_ants [matrix location orientation]
   [; caso nao caia na condição anterior ele testa só o de um lado
     if matrix:get uav-matrix ([pycor] of side90) ([pxcor] of side90) = matrix:get uav-matrix ([pycor] of menor) ([pxcor] of menor)
     [
-      matrix:set uav-matrix ([pycor] of side90) ([pxcor] of side90) ( matrix:get uav-matrix ([pycor] of side90) ([pxcor] of side90) + 1)
+      set uav-matrix matrix:set-and-report uav-matrix ([pycor] of side90) ([pxcor] of side90) ( matrix:get uav-matrix ([pycor] of side90) ([pxcor] of side90) + 1)
 
       report (list uav-matrix side90 (uav-heading + 90))
     ]
@@ -784,7 +791,7 @@ to-report simulate_ants [matrix location orientation]
   [; e depois testa do outro
     if matrix:get uav-matrix ([pycor] of sideM90) ([pxcor] of sideM90) = matrix:get uav-matrix ([pycor] of menor) ([pxcor] of menor)
     [
-      matrix:set uav-matrix ([pycor] of sideM90) ([pxcor] of sideM90) ( matrix:get uav-matrix ([pycor] of sideM90) ([pxcor] of sideM90) + 1)
+      set uav-matrix matrix:set-and-report uav-matrix ([pycor] of sideM90) ([pxcor] of sideM90) ( matrix:get uav-matrix ([pycor] of sideM90) ([pxcor] of sideM90) + 1)
 
       report (list uav-matrix sideM90 (uav-heading - 90))
     ]
@@ -793,20 +800,20 @@ to-report simulate_ants [matrix location orientation]
   ;por final se nao caiu em nenhuma das condições anteriores só resta testar o atras
   if member? behind possible-patches
   [
-    matrix:set uav-matrix ([pycor] of behind) ([pxcor] of behind) ( matrix:get uav-matrix ([pycor] of behind) ([pxcor] of behind) + 1)
+    set uav-matrix matrix:set-and-report uav-matrix ([pycor] of behind) ([pxcor] of behind) ( matrix:get uav-matrix ([pycor] of behind) ([pxcor] of behind) + 1)
 
     report (list uav-matrix behind (uav-heading + 180))
   ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-465
+195
 10
-975
-541
+955
+791
 -1
 -1
-10.0
+15.0
 1
 10
 1
