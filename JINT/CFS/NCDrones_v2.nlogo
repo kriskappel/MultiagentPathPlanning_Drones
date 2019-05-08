@@ -53,6 +53,8 @@ turtles-own[
   front-steps
   personal-curve-list
   own-matrix
+
+  old-matrix
   ;already-sync
 ]
 
@@ -213,21 +215,21 @@ to go
          move-to neighborMin
        ]
 
-       let firstMatrix own-matrix ;copia a matriz de memoria para uma matriz auxiliar no caso de achar
-                                  ;uma outra turtle e precisar atualizar
-
-       let newMatrix []
-       let flag 0;flag para saber se foi sincronizado ou nao
-       ask other turtles-on patches in-radius 3
-       [
-           set newMatrix sync-matrix own-matrix firstMatrix;passa a matriz das duas turtles para sincronizar
-           set firstMatrix newMatrix
-           let otherMatrix matrix:times newMatrix 1
-           set flag 1
-           set own-matrix otherMatrix
-       ]
-       if (flag = 1)
-       [set own-matrix newMatrix];seta o valor da matrix no agente inicial, caso tenha algum agente na volta em que o valor tambem foi alterado
+;       let firstMatrix own-matrix ;copia a matriz de memoria para uma matriz auxiliar no caso de achar
+;                                  ;uma outra turtle e precisar atualizar
+;
+;       let newMatrix []
+;       let flag 0;flag para saber se foi sincronizado ou nao
+;       ask other turtles-on patches in-radius 3
+;       [
+;           set newMatrix sync-matrix own-matrix firstMatrix;passa a matriz das duas turtles para sincronizar
+;           set firstMatrix newMatrix
+;           let otherMatrix matrix:times newMatrix 1
+;           set flag 1
+;           set own-matrix otherMatrix
+;       ]
+;       if (flag = 1)
+;       [set own-matrix newMatrix];seta o valor da matrix no agente inicial, caso tenha algum agente na volta em que o valor tambem foi alterado
 
        ask neighborMin[
 
@@ -274,6 +276,11 @@ to go
        ask min-one-of patches [u-value][
          set number-of-coverages u-value
        ]
+     ]
+
+     if(ticks = 100)
+     [
+
      ]
 
      tick
