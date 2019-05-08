@@ -280,16 +280,18 @@ to go
        ]
      ]
 
-     if(ticks = 100)
+     if(ticks mod 1000 = 0)
      [
+       ;print "oi"
        let sum-matrix matrix:make-constant (max-pxcor + 1) (max-pycor + 1) 0
        ask turtles [
          set sum-matrix matrix:plus sum-matrix (matrix:minus own-matrix old-matrix)
-       ]
 
+       ]
+       set sum-matrix matrix:plus sum-matrix [old-matrix] of turtle 0
        ask turtles[
-         set own-matrix sum-matrix
-         set old-matrix sum-matrix
+         set own-matrix matrix:copy sum-matrix
+         set old-matrix matrix:copy sum-matrix
        ]
      ]
 
@@ -1057,7 +1059,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="LRTA* 10k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="c_cfs10k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 10000</exitCondition>
@@ -1073,7 +1075,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="LRTA* 15k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="c_cfs15k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 15000</exitCondition>
@@ -1089,7 +1091,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="LRTA* 20k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="c_cfs20k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 20000</exitCondition>
