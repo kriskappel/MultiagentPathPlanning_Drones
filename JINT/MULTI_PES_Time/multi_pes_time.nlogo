@@ -60,6 +60,9 @@ turtles-own[
 
   time-matrix
   time-list
+
+  turtle_pos
+  turtle_head
 ]
 
 patches-own[
@@ -145,6 +148,8 @@ to setup-ants
     let auxmap []
     set timestamps[]
 
+    set turtle_head []
+
     set time-matrix[]
     set time-list []
 
@@ -172,6 +177,8 @@ to setup-ants
 
       set map-list lput matrix:from-row-list auxmap map-list
       set timestamps lput 0 timestamps
+
+      set turtle_head lput 0 turtle_head
     ]
 
     set time-matrix matrix:from-row-list time-matrix
@@ -187,6 +194,8 @@ to setup-ants
     ]
 
     set number-of-fires 0
+
+    set turtle_pos n-values number-of-ants [0]
   ]
 end
 
@@ -223,6 +232,26 @@ to go
        ;set timestamps replace-item who timestamps ticks
        set time-list replace-item who time-list time-matrix
 
+       let i 0
+
+       while [i < number-of-ants]
+       [
+         if (i != who)
+         [
+           if (is-patch? item i turtle_pos)
+           [
+             let returned_list simulate_ants item i map-list item i turtle_pos item i turtle_head item i time-list
+             set map-list replace-item i map-list (item 0 returned_list)
+             set turtle_pos replace-item i turtle_pos (item 1 returned_list)
+             set turtle_head replace-item i turtle_head (item 2 returned_list)
+             set time-list replace-item i time-list (item 3 returned_list)
+           ]
+         ]
+
+         set i i + 1
+       ]
+
+
        let neighborMin min-of-4-matrix map-list timestamps time-list ;retorna o patch com menor valor da vizinhança
 
        if(neighborMin != patch-here)
@@ -253,6 +282,10 @@ to go
        let neighborMaps map-list
        let neighborTimes timestamps
        let flagsync 0
+
+       let turtle_sync who
+       let neighborPos turtle_pos
+       let neighborHead turtle_head
        ;let newMatrix []
        ;let flag 0;flag para saber se foi sincronizado ou nao
        ask other turtles-on patches in-radius 3
@@ -271,10 +304,19 @@ to go
            set neighborTimes replace-item who neighborTimes ticks
            set flagsync 1
 
+           set neighborPos replace-item who neighborPos patch-here
+
+           set neighborHead replace-item who neighborHead heading
+
+
        ]
        if (flagsync = 1)
-       [set map-list neighborMaps
-       set timestamps neighborTimes]
+       [
+         set map-list neighborMaps
+         set timestamps neighborTimes
+         set turtle_pos neighborPos
+         set turtle_head neighborHead
+       ]
 
 
 ;       if (flag = 1)
@@ -301,7 +343,7 @@ to go
          [
            set max-u-value [u-value] of max-one-of patches [u-value]
            let newChecked [];vetor auxiliar pra fazer a copia
-           let i 0
+           set i 0
            while [i < length checked]
            [
              set newChecked lput item i checked newChecked
@@ -704,15 +746,162 @@ to-report smallest-tick [tick-maps]
 
   report return-list
 end
+
+
+to-report simulate_ants [matrix location orientation ts_matrix]
+
+  let uav-matrix matrix
+  let uav-pos location
+  let uav-heading orientation
+  let uav-ts ts_matrix
+
+  let possible-patches []
+  let flag 0
+
+  let ahead 0
+  let side90 0
+  let sideM90 0
+  let behind 0
+
+  ask uav-pos [
+    set ahead patch-at-heading-and-distance uav-heading 1
+    set side90 patch-at-heading-and-distance (uav-heading + 90) 1
+    set sideM90 patch-at-heading-and-distance (uav-heading - 90) 1
+    set behind patch-at-heading-and-distance uav-heading -1
+  ]
+
+  ;primeiro testa todos os patches dos 4 vizinhos sao possiveis e se nao tem nenhuma turtle neles e poe os possiveis numa lista (possible-patches)
+  if ahead != nobody and not any? turtles-on ahead
+  [set possible-patches lput ahead possible-patches]
+
+  if side90 != nobody and not any? turtles-on side90
+  [set possible-patches lput side90 possible-patches]
+
+  if sideM90 != nobody and not any? turtles-on sideM90
+  [set possible-patches lput sideM90 possible-patches]
+
+  if behind  != nobody and not any? turtles-on behind
+  [set possible-patches lput behind possible-patches]
+
+  if empty? possible-patches
+  [report (list uav-matrix uav-pos uav-heading uav-ts)];se nao existe nenhum vizinho possivel ele só retorna o patch atual
+
+  let menor item 0 possible-patches
+
+  ;acha o menor da lista
+
+  let i 0
+  while [i < length possible-patches]
+  [
+    let current item i possible-patches
+
+    if matrix:get uav-matrix ([pycor] of current) ([pxcor] of current) < matrix:get uav-matrix ([pycor] of menor) ([pxcor] of menor)
+    [
+      set menor current
+    ]
+    set i i + 1
+  ]
+  ;no final do loop menor tem o valor do menor
+
+  if member? ahead possible-patches
+  [; aqui se o menor for o logo a frente dai retorna ele, caso contrario continua a execução
+    if matrix:get uav-matrix ([pycor] of ahead) ([pxcor] of ahead) = matrix:get uav-matrix ([pycor] of menor) ([pxcor] of menor)
+    [
+      set uav-matrix matrix:set-and-report uav-matrix ([pycor] of ahead) ([pxcor] of ahead) ( matrix:get uav-matrix ([pycor] of ahead) ([pxcor] of ahead) + 1)
+
+      set uav-ts matrix:set-and-report uav-ts ([pycor] of ahead) ([pxcor] of ahead) ticks
+
+      report (list uav-matrix  ahead  uav-heading uav-ts)
+    ];retorna o menor se ele for o logo a frente
+  ]
+
+  let sidelist []
+  set sidelist lput side90 sidelist
+  set sidelist lput sideM90 sidelist
+  ;guardou os dois dos lados no sidelist pra passar um random neles caso os dois dos lados estejam disponiveis
+
+  if (member? sideM90 possible-patches) and (member? side90 possible-patches)
+  [; se os dois  forem possiveis
+    if matrix:get uav-matrix ([pycor] of side90) ([pxcor] of side90) = matrix:get uav-matrix ([pycor] of menor) ([pxcor] of menor)
+    [; e um deles for o menor e os dois forem iguais dai ele passa um random e retorna
+      if matrix:get uav-matrix ([pycor] of sideM90) ([pxcor] of sideM90) = matrix:get uav-matrix ([pycor] of side90) ([pxcor] of side90)
+      [
+        let rng item 0 shuffle sidelist
+
+        if matrix:get uav-ts ([pycor] of sideM90) ([pxcor] of sideM90) <  matrix:get uav-ts ([pycor] of side90) ([pxcor] of side90)
+        [
+          set rng sideM90
+        ]
+
+        if matrix:get uav-ts ([pycor] of sideM90) ([pxcor] of sideM90) >  matrix:get uav-ts ([pycor] of side90) ([pxcor] of side90)
+        [
+          set rng side90
+        ]
+
+        if rng = side90
+        [
+          set uav-matrix matrix:set-and-report uav-matrix ([pycor] of side90) ([pxcor] of side90) ( matrix:get uav-matrix ([pycor] of side90) ([pxcor] of side90) + 1)
+
+          set uav-ts matrix:set-and-report uav-ts ([pycor] of side90) ([pxcor] of side90) ticks
+
+          report (list uav-matrix side90 (uav-heading + 90) uav-ts)
+        ]
+
+        if rng = sideM90
+        [
+          set uav-matrix matrix:set-and-report uav-matrix ([pycor] of sideM90) ([pxcor] of sideM90) ( matrix:get uav-matrix ([pycor] of sideM90) ([pxcor] of sideM90) + 1)
+
+          set uav-ts matrix:set-and-report uav-ts ([pycor] of sideM90) ([pxcor] of sideM90) ticks
+
+          report (list uav-matrix sideM90 (uav-heading - 90) uav-ts)
+        ]
+
+      ]
+
+    ]
+  ]
+  if (member? side90 possible-patches)
+  [; caso nao caia na condição anterior ele testa só o de um lado
+    if matrix:get uav-matrix ([pycor] of side90) ([pxcor] of side90) = matrix:get uav-matrix ([pycor] of menor) ([pxcor] of menor)
+    [
+      set uav-matrix matrix:set-and-report uav-matrix ([pycor] of side90) ([pxcor] of side90) ( matrix:get uav-matrix ([pycor] of side90) ([pxcor] of side90) + 1)
+
+      set uav-ts matrix:set-and-report uav-ts ([pycor] of side90) ([pxcor] of side90) ticks
+
+      report (list uav-matrix side90 (uav-heading + 90) uav-ts)
+    ]
+  ]
+  if (member? sideM90 possible-patches)
+  [; e depois testa do outro
+    if matrix:get uav-matrix ([pycor] of sideM90) ([pxcor] of sideM90) = matrix:get uav-matrix ([pycor] of menor) ([pxcor] of menor)
+    [
+      set uav-matrix matrix:set-and-report uav-matrix ([pycor] of sideM90) ([pxcor] of sideM90) ( matrix:get uav-matrix ([pycor] of sideM90) ([pxcor] of sideM90) + 1)
+
+      set uav-ts matrix:set-and-report uav-ts ([pycor] of sideM90) ([pxcor] of sideM90) ticks
+
+      report (list uav-matrix sideM90 (uav-heading - 90) uav-ts)
+    ]
+  ]
+
+  ;por final se nao caiu em nenhuma das condições anteriores só resta testar o atras
+  if member? behind possible-patches
+  [
+    set uav-matrix matrix:set-and-report uav-matrix ([pycor] of behind) ([pxcor] of behind) ( matrix:get uav-matrix ([pycor] of behind) ([pxcor] of behind) + 1)
+
+    set uav-ts matrix:set-and-report uav-ts ([pycor] of behind) ([pxcor] of behind) ticks
+
+    report (list uav-matrix behind (uav-heading + 180) uav-ts)
+  ]
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
-465
+250
 10
-975
-541
+1010
+791
 -1
 -1
-10.0
+15.0
 1
 10
 1
@@ -1260,7 +1449,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="LRTA* 10k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="multi_pes_ts10k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 10000</exitCondition>
@@ -1276,7 +1465,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="LRTA* 15k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="multi_pes_ts15k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 15000</exitCondition>
@@ -1292,7 +1481,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="LRTA* 20k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="multi_pes_ts20k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 20000</exitCondition>
