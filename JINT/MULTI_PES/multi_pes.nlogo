@@ -705,16 +705,16 @@ to-report simulate_ants [matrix location orientation]
   ]
 
   ;primeiro testa todos os patches dos 4 vizinhos sao possiveis e se nao tem nenhuma turtle neles e poe os possiveis numa lista (possible-patches)
-  if ahead != nobody and not any? turtles-on ahead
+  if ahead != nobody
   [set possible-patches lput ahead possible-patches]
 
-  if side90 != nobody and not any? turtles-on side90
+  if side90 != nobody
   [set possible-patches lput side90 possible-patches]
 
-  if sideM90 != nobody and not any? turtles-on sideM90
+  if sideM90 != nobody
   [set possible-patches lput sideM90 possible-patches]
 
-  if behind  != nobody and not any? turtles-on behind
+  if behind  != nobody
   [set possible-patches lput behind possible-patches]
 
   if empty? possible-patches
