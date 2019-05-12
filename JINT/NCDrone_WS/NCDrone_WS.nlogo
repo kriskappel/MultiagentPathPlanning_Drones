@@ -233,9 +233,13 @@ to go
        ]
        [
 
-;         if (neighborMin = patch-ahead 1) or (front-steps = 0)
-;         [ set front-steps front-steps + 1 ]
-;         ;[add1-curve-list]
+         if (neighborMin = patch-left-and-ahead 90 1) or (neighborMin = patch-right-and-ahead 90 1)
+         [ set turn-side turn-side + 1 ]
+         ;[add1-curve-list]
+
+         if (neighborMin = patch-ahead -1)
+         [ set turn-back turn-back + 1 ]
+
 
          face neighborMin
          move-to neighborMin
@@ -493,28 +497,23 @@ to-report min-of-4-neighbor
       if( [u-value] of patch-left-and-ahead 90 1 = menor)
       [
         if( [u-value] of patch-left-and-ahead 90 -1 = menor)
-          [set turn-side turn-side + 1
-            report item 0 shuffle sidelist]
+          [report item 0 shuffle sidelist]
       ]
     ]
     if (member? patch-left-and-ahead 90 1 possible-patches)
     [; caso nao caia na condição anterior ele testa só o de um lado
       if( [u-value] of patch-left-and-ahead 90 1 = menor)
-      [set turn-side turn-side + 1
-        report patch-left-and-ahead 90 1]
+      [report patch-left-and-ahead 90 1]
     ]
     if (member? patch-left-and-ahead -90 1 possible-patches)
     [; e depois testa do outro
       if( [u-value] of patch-left-and-ahead 90 -1 = menor)
-      [set turn-side turn-side + 1
-        report patch-left-and-ahead -90 1]
+      [report patch-left-and-ahead -90 1]
     ]
 
     ;por final se nao caiu em nenhuma das condições anteriores só resta testar o atras
     ifelse member? patch-ahead -1 possible-patches
-    [
-      set turn-back turn-back + 1
-      report patch-ahead -1]
+    [report patch-ahead -1]
     [report patch-here]
 
 end
@@ -677,11 +676,11 @@ end
 GRAPHICS-WINDOW
 205
 10
-985
-811
+715
+541
 -1
 -1
-15.4
+10.0
 1
 10
 1

@@ -227,27 +227,8 @@ to go
 
        let neighborMin min-of-4-matrix ;retorna o patch com menor valor da vizinhança
 
-       if neighborMin != patch-here ;se nao existe nenhum vizinho possivel ele nao anda
-       [
 
-         ifelse ( neighborMin = patch-ahead 1) or (front-steps = 0)
-         [;se o menor for o logo a frente ele só soma 1 na variavel de passos a frente pro histograma de curvas
-           set front-steps front-steps + 1
-         ]
-         [;caso contrario se for um dos lados ele marca turn-side + 1
-          ; se for o logo atras ele marca turn-back + 1
 
-           add1-curve-list
-           ifelse ( neighborMin = patch-left-and-ahead 90 1 or neighborMin = patch-left-and-ahead -90 1)
-           [set turn-side turn-side + 1]
-
-           [if(neighborMin = patch-ahead -1)
-             [set turn-back turn-back + 1]
-
-           ]
-         ]
-
-       ]
 
        ifelse(guided = true)
        [
@@ -282,7 +263,11 @@ to go
 ;         if (neighborMin = patch-ahead 1) or (front-steps = 0)
 ;         [ set front-steps front-steps + 1 ]
 ;         ;[add1-curve-list]
+         if ( neighborMin = patch-left-and-ahead 90 1 or neighborMin = patch-left-and-ahead -90 1)
+         [set turn-side turn-side + 1]
 
+         if(neighborMin = patch-ahead -1)
+         [set turn-back turn-back + 1]
          face neighborMin
          move-to neighborMin
        ]
@@ -336,9 +321,10 @@ to go
        ]
      ]
 
-     if(ticks mod 100 = 0)
+     if(ticks mod 1000 = 0)
      [
        ;print "oi"
+
        let sum-matrix matrix:make-constant (max-pxcor + 1) (max-pycor + 1) 0
        ask turtles [
          set sum-matrix matrix:plus sum-matrix (matrix:minus own-matrix old-matrix)
@@ -794,11 +780,11 @@ end
 GRAPHICS-WINDOW
 205
 10
-985
-811
+815
+641
 -1
 -1
-15.4
+12.0
 1
 10
 1
@@ -1346,7 +1332,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="nc-ws10k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="cfs_ws10k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 10000</exitCondition>
@@ -1362,7 +1348,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="nc-ws15k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="cfs_ws15k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 15000</exitCondition>
@@ -1378,7 +1364,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="nc-ws20k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="cfs_ws20k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 20000</exitCondition>
