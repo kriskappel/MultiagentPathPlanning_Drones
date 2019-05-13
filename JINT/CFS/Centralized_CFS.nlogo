@@ -280,7 +280,7 @@ to go
        ]
      ]
 
-     if(ticks mod 1000 = 0)
+     if(ticks mod 50 = 0)
      [
        ;print "oi"
        let sum-matrix matrix:make-constant (max-pxcor + 1) (max-pycor + 1) 0
