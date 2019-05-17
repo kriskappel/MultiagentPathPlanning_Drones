@@ -47,6 +47,18 @@ globals[
 
    csv-curve-list
    ;tempQMI
+   cluster
+   set_clusters
+   cluster-values
+
+   watershed_patches
+   ws-count
+
+   mean-map
+   map-matrix
+
+   debug-cluster
+
 ]
 
 turtles-own[
@@ -56,7 +68,13 @@ turtles-own[
   own-matrix
   map-list
   timestamps
+
+  guided
+  destiny
+  turn-guided
   ;already-sync
+
+  guided-unlock
 
   time-matrix
   time-list
@@ -66,6 +84,7 @@ patches-own[
    u-value
    time-interval-visits
    visita-anterior
+   color-set
 ]
 
 to setup
@@ -87,6 +106,8 @@ to setup-patches
 
     set plabel u-value
     set plabel-color black
+
+    set color-set 0
   ]
 
   set number-of-fires 0
@@ -115,6 +136,8 @@ to setup-patches
   let i 0
   let j 0
 
+  set mean-map 0
+
 
   repeat max-pxcor + 1 [
     set j 0
@@ -127,6 +150,16 @@ to setup-patches
     ]
     set i i + 1
   ]
+
+  set cluster []
+  set set_clusters[]
+  set watershed_patches []
+  set cluster-values[]
+
+  set map-matrix []
+
+  set debug-cluster []
+
 end
 
 to setup-ants
@@ -145,7 +178,7 @@ to setup-ants
     let auxmap []
     set timestamps[]
 
-    set time-matrix[]
+    set time-matrix []
     set time-list []
 
     ;inicializando matriz de memoria de cada agente
@@ -162,22 +195,20 @@ to setup-ants
 
       set auxmap lput temporary-list auxmap
       set own-matrix lput temporary-list own-matrix
-
-      set time-matrix lput temporary-list time-matrix
     ]
 
-    repeat number-of-ants
+    repeat 4 ;change for number-of-turtles for other numbers
     [
-      set time-list lput matrix:from-row-list auxmap time-list
-
       set map-list lput matrix:from-row-list auxmap map-list
       set timestamps lput 0 timestamps
+
+      set time-list lput matrix:from-row-list auxmap time-list
     ]
 
-    set time-matrix matrix:from-row-list time-matrix
     set own-matrix matrix:from-row-list own-matrix
-
+    set time-matrix matrix:copy own-matrix
     ;matrix:set own-matrix 0 0 matrix:get own-matrix 0 0 + 1;colocando ++ na primeira posição
+    set guided false
 
     ask patch-here[
        ;set u-value u-value + 1
@@ -187,7 +218,15 @@ to setup-ants
     ]
 
     set number-of-fires 0
+
+    set destiny 0
+    set turn-guided false
+    set guided false
+
+    set guided-unlock 0
   ]
+
+
 end
 
 ;; Libera novos drones a cada intervalo de tempo especifico
@@ -210,7 +249,7 @@ to go
 
        matrix:set own-matrix ([pycor] of patch-here) ([pxcor] of patch-here) (matrix:get own-matrix ([pycor] of patch-here) ([pxcor] of patch-here)) + 1
 
-       matrix:set time-matrix ([pycor] of patch-here) ([pxcor] of patch-here) (ticks)
+       matrix:set time-matrix ([pycor] of patch-here) ([pxcor] of patch-here) ticks
 
        let old-patch patch-here
 
@@ -220,35 +259,112 @@ to go
        ]
 
        set map-list replace-item who map-list own-matrix
-       ;set timestamps replace-item who timestamps ticks
+       set timestamps replace-item who timestamps ticks
+
        set time-list replace-item who time-list time-matrix
 
-       let neighborMin min-of-4-matrix map-list timestamps time-list ;retorna o patch com menor valor da vizinhança
+       let neighborMin 0
 
-       if(neighborMin != patch-here)
+       let flag_lock false
+
+       let first-turtle who
+       if(patch-ahead 1 != nobody)
        [
-
-         ifelse ( neighborMin = patch-ahead 1) or (front-steps = 0)
-         [;se o menor for o logo a frente ele só soma 1 na variavel de passos a frente pro histograma de curvas
-           set front-steps front-steps + 1
-         ]
-         [;caso contrario se for um dos lados ele marca turn-side + 1
-          ; se for o logo atras ele marca turn-back + 1
-
-           add1-curve-list
-           ifelse ( neighborMin = patch-left-and-ahead 90 1 or neighborMin = patch-left-and-ahead -90 1)
-           [set turn-side turn-side + 1]
-
-           [if(neighborMin = patch-ahead -1)
-             [set turn-back turn-back + 1]
-
+         ask (turtles-on patch-ahead 1)
+         [
+           if (patch-ahead 1 != nobody)
+           [
+             if(member? first-turtle [who] of turtles-on patch-ahead 1)
+             [set guided-unlock ticks]
            ]
          ]
-
-         ;anda pro menor
-         face neighborMin
-         move-to neighborMin
        ]
+
+       if (guided-unlock != 0)
+       [ifelse(ticks - guided-unlock <= 3)
+         [set flag_lock true]
+         [set guided-unlock 0]
+       ]
+
+       ifelse(not guided) or (flag_lock)
+       [
+         set neighborMin min-of-4-matrix map-list timestamps time-list ;retorna o patch com menor valor da vizinhança
+
+         if(neighborMin != patch-here)
+         [
+
+           ifelse ( neighborMin = patch-ahead 1) or (front-steps = 0)
+           [;se o menor for o logo a frente ele só soma 1 na variavel de passos a frente pro histograma de curvas
+             set front-steps front-steps + 1
+           ]
+           [;caso contrario se for um dos lados ele marca turn-side + 1
+            ; se for o logo atras ele marca turn-back + 1
+
+             ;add1-curve-list
+             ifelse ( neighborMin = patch-left-and-ahead 90 1 or neighborMin = patch-left-and-ahead -90 1)
+             [set turn-side turn-side + 1]
+
+             [if(neighborMin = patch-ahead -1)
+               [set turn-back turn-back + 1]
+
+             ]
+           ]
+
+           ;anda pro menor
+           ;;TODO descomentar as duas linhas pra ele se mover
+           face neighborMin
+           move-to neighborMin
+         ]
+       ]
+
+       [
+         set neighborMin patch-here
+
+         ifelse(turn-guided = false)
+         [
+           face patch [pxcor] of patch-here [pycor] of destiny
+           if(patch-ahead 1  != nobody and not any? turtles-on patch-ahead 1)
+           [set neighborMin patch-ahead 1
+             move-to neighborMin]
+           if(patch-here = patch [pxcor] of patch-here [pycor] of destiny) [set turn-guided true set turn-side turn-side + 1]
+         ]
+         [
+           face patch [pxcor] of destiny [pycor] of patch-here
+           if(patch-ahead 1  != nobody and not any? turtles-on patch-ahead 1)
+           [set neighborMin patch-ahead 1
+             move-to neighborMin]
+           if(patch-here = patch [pxcor] of destiny [pycor] of patch-here) [set turn-guided false set guided false]
+         ]
+
+         ;move-to neighborMin
+       ]
+         ;set neighborMin
+
+        ;;GUIDED PART
+;         ifelse (ticks = 1)
+;
+;         [move-to patch 15 15]
+;         [
+;           if(guided = true)
+;           [
+;             ifelse(turn-guided = false)
+;             ;
+;             [
+;               print "aqui4"
+;               face patch [pxcor] of patch-here [pycor] of destiny
+;               move-to patch-ahead 1
+;               if(patch-here = patch [pxcor] of patch-here [pycor] of destiny) [print "aqui" set turn-guided true]
+;             ]
+;
+;             [
+;               face patch [pxcor] of destiny [pycor] of patch-here
+;               move-to patch-ahead 1
+;               if(patch-here = patch [pxcor] of destiny [pycor] of patch-here) [print "aqu2i" set turn-guided false set guided false]
+;             ]
+;           ]
+;         ]
+
+
 
        let neighborMaps map-list
        let neighborTimes timestamps
@@ -256,6 +372,9 @@ to go
        ;let newMatrix []
        ;let flag 0;flag para saber se foi sincronizado ou nao
        let neighborTimeList time-list
+
+       let aux-guided guided
+
        ask other turtles-on patches in-radius 3
        [
            ;print (word "sync")
@@ -267,19 +386,55 @@ to go
            ;set own-matrix otherMatrix
            ;
            let test matrix:times own-matrix 1
+
+           let auxtime matrix:copy time-matrix
+
            set neighborMaps replace-item who neighborMaps test
            ;set neighborTimes lput item who ticks neighborTimes
            set neighborTimes replace-item who neighborTimes ticks
 
-           let auxtime matrix:copy time-matrix
            set neighborTimeList replace-item who neighborTimeList auxtime
 
            set flagsync 1
 
+           if(aux-guided = false) and (guided = false)
+           [
+             ;print "wathershed call"
+             ;set map-matrix test
+             sum-map-matrix
+             wathershed-start
+             if(length set_clusters > 0)
+             [
+               let cluster_pos position (max cluster-values) cluster-values
+               set destiny first (item cluster_pos set_clusters)
+               set destiny patch (item 0 destiny)(item 1 destiny)
+               set guided true
+               set turn-guided false
+
+               ;print destiny
+
+               ;print matrix:pretty-print-text map-matrix
+               ;print mean-map
+               ;print cluster-values
+
+               set debug-cluster set_clusters
+               set map-matrix []
+               set set_clusters []
+               set cluster-values []
+
+               stop
+             ]
+             ;print set_clusters
+           ]
+
+
+           ;escolher quem mandar por distancia euclidiana
+
        ]
        if (flagsync = 1)
        [set map-list neighborMaps
-       set timestamps neighborTimes]
+       set timestamps neighborTimes
+       set time-list neighborTimeList]
 
 
 ;       if (flag = 1)
@@ -333,6 +488,11 @@ to go
          set number-of-coverages u-value
        ]
      ]
+
+
+
+
+     ;ask formigas [ set guided false ]
 
      tick
 
@@ -435,8 +595,7 @@ to add1-curve-list
 end
 
 to-report min-of-4-matrix [matrixes times tick-maps]
-
-    let min_tick_patch smallest-tick tick-maps
+  let min_tick_patch smallest-tick tick-maps
 
     let possible-patches []
     let menor 99999
@@ -457,7 +616,7 @@ to-report min-of-4-matrix [matrixes times tick-maps]
           ;========TODO========
           ;REVER SE TA CERTO
           let evapMatrix item i tick-maps
-          let evapValue (ticks - matrix:get evapMatrix ([pycor] of patch-ahead 1) ([pxcor] of patch-ahead 1) ) / 1000
+          let evapValue (ticks - matrix:get evapMatrix ([pycor] of patch-ahead 1) ([pxcor] of patch-ahead 1) ) / 100
           set uvalue uvalue - evapValue
           ;let partial uvalue * ((item i times) / ticks)
           set result result + uvalue
@@ -513,7 +672,7 @@ to-report min-of-4-matrix [matrixes times tick-maps]
           let uvalue matrix:get auxmatrix ([pycor] of patch-left-and-ahead -90 1) ([pxcor] of patch-left-and-ahead -90 1)
           ;let partial uvalue * ((item i times) / ticks)
           let evapMatrix item i tick-maps
-          let evapValue (ticks - matrix:get evapMatrix ([pycor] of patch-left-and-ahead -90 1) ([pxcor] of patch-left-and-ahead -90 1) ) / 1000
+          let evapValue (ticks - matrix:get evapMatrix ([pycor] of patch-left-and-ahead -90 1) ([pxcor] of patch-left-and-ahead -90 1) ) / 100
           set uvalue uvalue - evapValue
           ;let partial uvalue * ((item i times) / ticks)
           set result result + uvalue
@@ -563,7 +722,7 @@ to-report min-of-4-matrix [matrixes times tick-maps]
           let uvalue matrix:get auxmatrix ([pycor] of patch-ahead -1) ([pxcor] of patch-ahead -1)
           ;let partial uvalue * ((item i times) / ticks)
           let evapMatrix item i tick-maps
-          let evapValue (ticks - matrix:get evapMatrix ([pycor] of patch-ahead -1) ([pxcor] of patch-ahead -1) ) / 1000
+          let evapValue (ticks - matrix:get evapMatrix ([pycor] of patch-ahead -1) ([pxcor] of patch-ahead -1) ) / 100
           set uvalue uvalue - evapValue
           ;let partial uvalue * ((item i times) / ticks)
           set result result + uvalue
@@ -583,6 +742,7 @@ to-report min-of-4-matrix [matrixes times tick-maps]
     ifelse empty? possible-patches
     [report patch-here]
     [report item 0 possible-patches]
+
 
     ;let menor item 0 possible-patches
 
@@ -637,6 +797,85 @@ to-report min-of-4-matrix [matrixes times tick-maps]
 
 end
 
+to-report smallest-tick [tick-maps]
+  let available_patches []
+
+  if patch-ahead 1 != nobody [set available_patches lput (patch-ahead 1) available_patches]
+  if patch-left-and-ahead 90 1 != nobody [set available_patches lput (patch-left-and-ahead 90 1) available_patches]
+  if patch-left-and-ahead -90 1 != nobody [set available_patches lput (patch-left-and-ahead -90 1) available_patches]
+  if patch-ahead -1 != nobody [set available_patches lput (patch-ahead -1) available_patches]
+
+
+  let max_tick -1
+  let i 0
+  let j 0
+
+  let tm 0
+  let ap 0
+
+  let return-list []
+
+  repeat length tick-maps
+  [
+    set tm item i tick-maps
+    repeat length available_patches
+    [
+      set ap item j available_patches
+      ifelse (max_tick = -1)
+      [
+        set max_tick matrix:get tm ([pycor] of ap) ([pxcor] of ap)
+      ]
+      [
+        if matrix:get tm ([pycor] of ap) ([pxcor] of ap) = max_tick
+        [set return-list lput tm return-list]
+
+        if matrix:get tm ([pycor] of ap) ([pxcor] of ap) < max_tick
+        [set return-list []
+          set return-list lput tm return-list]
+      ]
+      set j j + 1
+    ]
+    set j 0
+    set i i + 1
+  ]
+
+  report return-list
+end
+
+
+
+
+to sum-map-matrix
+  set map-matrix matrix:copy item 0 time-list
+  let i 1
+;  repeat (count formigas - 1)
+;  [
+;    set map-matrix matrix:plus map-matrix (item i time-list)
+;    set i i + 1
+;  ]
+  let max-list []
+
+  repeat max-pycor
+  [
+    let j 0
+    repeat max-pxcor
+    [
+      let k 0
+      repeat count formigas
+      [
+        let auxiliar_matrix item k time-list
+        set max-list lput (matrix:get auxiliar_matrix i j) max-list
+
+        set k k + 1
+      ]
+      matrix:set map-matrix i j (max max-list)
+
+      set j j + 1
+    ]
+    set i i + 1
+  ]
+end
+
 to-report sync-matrix [matrix1 matrix2] ;sincroniza as duas matrizes passadas
   let matrix3 (matrix:plus matrix1 matrix2) ;matrix3 é a soma das matrizes 1 e 2
 
@@ -683,59 +922,364 @@ to print-matrix [matrix]
      file-close ]
 end
 
-to-report smallest-tick [tick-maps]
-  let available_patches []
 
-  if patch-ahead 1 != nobody [set available_patches lput (patch-ahead 1) available_patches]
-  if patch-left-and-ahead 90 1 != nobody [set available_patches lput (patch-left-and-ahead 90 1) available_patches]
-  if patch-left-and-ahead -90 1 != nobody [set available_patches lput (patch-left-and-ahead -90 1) available_patches]
-  if patch-ahead -1 != nobody [set available_patches lput (patch-ahead -1) available_patches]
+;to wathershed [x y]
+;  let i 0
+;  let flag_valid false
+;  if test-valid-patch x y
+;  [
+;    set cluster lput (patch x y ) cluster
+;    spread x y
+;    set flag_valid true
+;  ]
+;  set i i + 1
+;
+;
+;
+;  if(flag_valid)
+;  [
+;    while [i < length cluster]
+;    [
+;      let selected-patch item i cluster
+;      spread [pxcor] of selected-patch [pycor] of selected-patch
+;      set i i + 1
+;    ]
+;  ]
+;  if(not empty? cluster)
+;  [set set_clusters lput cluster set_clusters
+;   set cluster []
+;   color-map]
+;
+;
+;end
+;
+;
+;
+;
+;to-report test-valid-patch [x y]
+;  ;print patch x y
+;  if (patch x y) != nobody
+;  [
+;
+;    if (not (member? (patch x y)  cluster) and not (member? (patch x y) set_clusters)) and ([u-value] of (patch x y) < mean-map)
+;    [
+;      let i 0
+;      let flag_return true
+;
+;      while [i < length set_clusters]
+;      [
+;        let aux_cluster item i set_clusters
+;
+;        set i i + 1
+;        if( (member? (patch x y) aux_cluster) )
+;        [
+;          set flag_return false
+;        ]
+;      ]
+;
+;      report flag_return
+;    ]
+;
+;  ]
+;  report false
+;
+;end
+;
+;
+;to spread [x y]
+;  ;while[length cluster > ws-count]
+;  ;[
+;   ; let selected-patch item ws-count cluster
+;  if( test-valid-patch (x - 1)(y - 1) )[set cluster lput patch(x - 1)(y - 1) cluster]
+;  if( test-valid-patch (x    )(y - 1) )[set cluster lput patch(x    )(y - 1) cluster]
+;  if( test-valid-patch (x + 1)(y - 1) )[set cluster lput patch(x + 1)(y - 1) cluster]
+;
+;  if( test-valid-patch (x - 1)(y    ) )[set cluster lput patch(x - 1)(y    ) cluster]
+;  if( test-valid-patch (x + 1)(y    ) )[set cluster lput patch(x + 1)(y    ) cluster]
+;
+;
+;  if( test-valid-patch (x - 1)(y + 1) )[set cluster lput patch(x - 1)(y + 1) cluster]
+;  if( test-valid-patch (x    )(y + 1) )[set cluster lput patch(x    )(y + 1) cluster]
+;  if( test-valid-patch (x + 1)(y + 1) )[set cluster lput patch(x + 1)(y + 1) cluster]
+;  ;]
+;
+;end
+;
+;
+;
+;
+;
+;to color-map
+;  let i 0
+;  let j 0
+;  while[(j < length set_clusters)]
+;  [
+;    while [(i < length item j set_clusters)]
+;    [
+;      let list-to-color item j set_clusters
+;      let patch-to-color item i list-to-color
+;      ask patch-to-color[
+;        set color-set color-set + 1
+;        set pcolor color-set
+;      ]
+;      set i i + 1
+;    ]
+;    set j j + 1
+;  ]
+;  ;set ws-count 0
+;  ;if not empty? cluster
+;  ;[set set_clusters lput cluster set_clusters]
+;  ;set cluster []
+;end
+
+;
+;to floodfill [x y]
+;
+;  ifelse((member? (patch x y)  cluster) or (member? (patch x y) set_clusters))
+;  []
+;  [
+;  ask patch x y
+;  [
+;    visitados x y
+;    ask patch (x - 1)(y - 1)
+;    [ visitados (x - 1)(y - 1)]
+;
+;    ask patch (x)(y - 1)
+;    [ visitados (x)(y - 1)]
+;
+;    ask patch (x + 1)(y - 1)
+;    [ visitados (x + 1)(y - 1)]
+;
+;    ask patch (x - 1)(y)
+;    [ visitados (x - 1)(y)]
+;
+;    ask patch (x + 1)(y)
+;    [ visitados (x + 1)(y)]
+;
+;    ask patch (x - 1)(y + 1)
+;    [ visitados (x - 1)(y + 1)]
+;
+;    ask patch (x)(y + 1)
+;    [ visitados (x)(y + 1)]
+;
+;    ask patch (x + 1)(y + 1)
+;    [ visitados (x + 1)(y + 1)]
+;  ]
+;  ;set visited-patches []
+;  set set_clusters lput cluster set_clusters
+;  ]
+;end
+;
+;to visitados [x y ]
+;  ask patch x y
+;  [
+;    if(u-value < mean-map)
+;    [
+;      set watershed_patches lput patch x y watershed_patches
+;      set cluster lput patch x y cluster
+;      ;print (sentence x y)
+;      set color-set color-set + 1
+;      set pcolor color-set
+;    ]
+;  ]
+;end
+
+to test-color
+  ask patches
+  [set pcolor 1]
+end
+
+;##############------WATERSHED-------##########
 
 
-  let max_tick -1
+;;mean of the map
+to mean-the-map
+  ;let min-value min [u-value] of patches
+  ;let max-value max [u-value] of patches
+  ;let diff floor ((max-value - min-value) / 3)
+  ;set mean-map diff
+  ;print "mean"
+  let list-of-means []
   let i 0
-  let j 0
+  let row-numbers item 0 matrix:dimensions map-matrix
+  ;print row-numbers
+  let map-matrix-list matrix:to-row-list map-matrix
 
-  let tm 0
-  let ap 0
+  while [i < row-numbers]
+  [set list-of-means lput (mean item i map-matrix-list) list-of-means
+   ; print list-of-means
+  set i i + 1]
 
-  let return-list []
+  set mean-map floor mean list-of-means
+  ;if(mean-map != 0)
+  ;[print mean-map]
+  ;[set mean-map floor mean matrix:to-row-list map-matrix]
+end
 
-  repeat length tick-maps
+to mean-the-map-30percent
+  ;let min-value min [u-value] of patches
+  ;let max-value max [u-value] of patches
+  ;let diff floor ((max-value - min-value) / 3)
+  ;set mean-map diff
+  ;print "mean"
+  let list-of-means []
+  let max-u 0
+  let min-u 9999
+  let i 0
+  let row-numbers item 0 matrix:dimensions map-matrix
+  ;print row-numbers
+  let map-matrix-list matrix:to-row-list map-matrix
+
+  while [i < row-numbers]
   [
-    set tm item i tick-maps
-    repeat length available_patches
-    [
-      set ap item j available_patches
-      ifelse (max_tick = -1)
-      [
-        set max_tick matrix:get tm ([pycor] of ap) ([pxcor] of ap)
-      ]
-      [
-        if matrix:get tm ([pycor] of ap) ([pxcor] of ap) = max_tick
-        [set return-list lput tm return-list]
+    if(max item i map-matrix-list > max-u) [set max-u max item i map-matrix-list]
+    if(min item i map-matrix-list > min-u) [set min-u min item i map-matrix-list]
 
-        if matrix:get tm ([pycor] of ap) ([pxcor] of ap) < max_tick
-        [set return-list []
-          set return-list lput tm return-list]
-      ]
-      set j j + 1
-    ]
-    set j 0
     set i i + 1
   ]
 
-  report return-list
+  set mean-map floor (min-u + ((max-u - min-u) / 0.7))
+  ;if(mean-map != 0)
+  ;[print mean-map]
+  ;[set mean-map floor mean matrix:to-row-list map-matrix]
+end
+
+
+
+;;first func to be called
+to wathershed-start
+  ;print "wathershed"
+  mean-the-map
+   ask patches with [pxcor > -1]
+   [
+     if (matrix-test-valid-patch (pxcor)  (pycor));print "oi"
+     [ matrix-wathershed pxcor pycor ]
+
+   ]
+
+end
+
+;;list and cluster control
+to matrix-wathershed [x y]
+;  let coordinates []
+;  set coordinates lput x coordinates
+;  set coordinates lput y coordinates
+
+  let i 0
+  let flag_valid false
+  if matrix-test-valid-patch x y
+  [
+   ;set cluster lput (list x y) cluster
+   clusterize x y
+   matrix-spread x y
+   set flag_valid true
+  ]
+  set i i + 1
+
+
+  if(flag_valid)
+  [
+    while [i < length cluster]
+    [
+      let selected-patch item i cluster
+      matrix-spread item 0 selected-patch item 1 selected-patch
+      set i i + 1
+    ]
+  ]
+  if(not empty? cluster)
+  [
+    set set_clusters lput cluster set_clusters
+    set cluster []
+  ]
+end
+
+
+
+;;testing valid patches
+to-report matrix-test-valid-patch [x y]
+  if (patch x y) != nobody
+  [
+    ;print "test"
+    if (matrix:get map-matrix x y < mean-map)
+    [
+
+      if (not (member? (list x y) cluster))
+      [
+
+        let i 0
+        let flag_return true
+
+        while [i < length set_clusters]
+        [
+          let aux_cluster item i set_clusters
+
+          set i i + 1
+          if( (member? (list x y) aux_cluster) )
+          [
+            set flag_return false
+          ]
+        ]
+
+        report flag_return
+
+      ]
+    ]
+
+  ]
+  report false
+end
+
+
+
+;;recursion part
+to matrix-spread [x y]
+  if( matrix-test-valid-patch (x - 1)(y - 1) );[set cluster lput (list (x - 1)(y - 1)) cluster]
+  [clusterize (x - 1)(y - 1)]
+  if( matrix-test-valid-patch (x    )(y - 1) );[set cluster lput (list (x    )(y - 1)) cluster]
+  [clusterize (x    )(y - 1)]
+  if( matrix-test-valid-patch (x + 1)(y - 1) );[set cluster lput (list (x + 1)(y - 1)) cluster]
+  [clusterize (x + 1)(y - 1)]
+
+  if( matrix-test-valid-patch (x - 1)(y    ) );[set cluster lput (list (x - 1)(y    )) cluster]
+  [clusterize (x - 1)(y    )]
+  if( matrix-test-valid-patch (x + 1)(y    ) );[set cluster lput (list (x + 1)(y    )) cluster]
+  [clusterize (x + 1)(y    )]
+
+  if( matrix-test-valid-patch (x - 1)(y + 1) );[set cluster lput (list (x - 1)(y + 1)) cluster]
+  [clusterize (x - 1)(y + 1)]
+  if( matrix-test-valid-patch (x    )(y + 1) );[set cluster lput (list (x    )(y + 1)) cluster]
+  [clusterize (x    )(y + 1)]
+  if( matrix-test-valid-patch (x + 1)(y + 1) );[set cluster lput (list (x + 1)(y + 1)) cluster]
+  [clusterize (x + 1)(y + 1)]
+end
+
+to clusterize [x y]
+  set cluster lput (list x y) cluster
+
+  ;print "clusterize"
+  ifelse(length cluster-values = length set_clusters)
+  [
+   ; print set_clusters
+    set cluster-values lput ((matrix:get map-matrix x y) + 1) cluster-values
+  ]
+  [
+    ;print cluster-values
+    ;print set_clusters
+    let parcial_sum (last cluster-values) + (matrix:get map-matrix x y)
+    set parcial_sum parcial_sum + 1
+    set cluster-values replace-item (length (cluster-values) - 1) (cluster-values) (parcial_sum)
+
+  ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-465
+200
 10
-975
-541
+960
+791
 -1
 -1
-10.0
+15.0
 1
 10
 1
@@ -775,7 +1319,7 @@ NIL
 BUTTON
 1110
 105
-1173
+1172
 138
 NIL
 go
@@ -1283,7 +1827,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="multi_evap10k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="multi_ws_ts10k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 10000</exitCondition>
@@ -1299,7 +1843,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="multi_evap15k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="multi_ws_ts15k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 15000</exitCondition>
@@ -1315,7 +1859,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="multi_evap20k" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="multi_ws_ts20k" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 20000</exitCondition>
@@ -1347,7 +1891,7 @@ NetLogo 5.3.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="MM10k-2ants" repetitions="30" runMetricsEveryStep="false">
+  <experiment name="global10k-2ants" repetitions="30" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <exitCondition>ticks &gt;= 10000</exitCondition>
@@ -1358,6 +1902,38 @@ NetLogo 5.3.1
     <metric>turn-back</metric>
     <enumeratedValueSet variable="number-of-ants">
       <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="time-between-ants">
+      <value value="1"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="global10k-70percent" repetitions="30" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <exitCondition>ticks &gt;= 10000</exitCondition>
+    <metric>qmi</metric>
+    <metric>sdf</metric>
+    <metric>number-of-coverages</metric>
+    <metric>turn-side</metric>
+    <metric>turn-back</metric>
+    <enumeratedValueSet variable="number-of-ants">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="time-between-ants">
+      <value value="1"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="global40k" repetitions="30" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <exitCondition>ticks &gt;= 40000</exitCondition>
+    <metric>qmi</metric>
+    <metric>sdf</metric>
+    <metric>number-of-coverages</metric>
+    <metric>turn-side</metric>
+    <metric>turn-back</metric>
+    <enumeratedValueSet variable="number-of-ants">
+      <value value="4"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="time-between-ants">
       <value value="1"/>
